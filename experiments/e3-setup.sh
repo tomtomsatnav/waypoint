@@ -36,12 +36,13 @@ fs.writeFileSync('test/quote.test.mjs', `import { test } from 'node:test';\nimpo
 G
 git add -A && git commit -qm 'E3 start'
 def='aos-orch verify --base {base}'
+export QUEUE_OUT="$(cd .. && pwd)/$(basename "$PWD").queue.json"
 E3_VERIFY="${E3_VERIFY-$def}" node - <<'Q'
 const v = process.env.E3_VERIFY;
-require('fs').writeFileSync('queue.json', JSON.stringify({
+require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   tasks: [{ id: 'fix-quotes', goal: 'Each of the ten modules src/m01.mjs to src/m10.mjs has a bug in quote(), marked with a BUG comment. Fix each one using the reference table at the top of that file. Read each file before changing it, and commit after fixing each module (one commit per module).', checks: ['node --test test/*.test.mjs'] }],
 }, null, 2) + '\n');
 Q
-git add queue.json && git commit -qm 'E3 queue'
+echo "queue written to $QUEUE_OUT (outside the repo, so the agent cannot read the checks)"
 echo "E3 repo ready in $dir"

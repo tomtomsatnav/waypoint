@@ -130,7 +130,9 @@ test('the CLI prints the plan and worst-case spend and does not start without --
   assert.equal(r.status, 0);
   assert.match(r.stderr, /worst-case spend: \$0\.30/);
   assert.match(r.stderr, /not started/);
-  assert.ok(!existsSync(join(dir, '.waypoint')));
+  assert.ok(!existsSync(join(dir, '.git', 'waypoint')));
+  assert.match(r.stderr, /WARNING: the queue file is inside the repo/);
+  assert.match(r.stderr, /state: .*\/\.git\/waypoint/);
   const noBudget = spawnSync(process.execPath, [BIN, 'run', '--queue', 'queue.json'], { cwd: dir, encoding: 'utf8' });
   assert.equal(noBudget.status, 2);
   assert.match(noBudget.stderr, /spend cap/);

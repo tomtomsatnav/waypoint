@@ -52,8 +52,10 @@ node <waypoint>/bin/waypoint.mjs drift <transcript.jsonl>     # re-reads / re-ed
 - **Stall rule:** `stallLimit` blocks in a row with no new commit and no newly passing check end the task as blocked.
   `maxBlocks` caps blocks per task regardless.
 
-State lives in `.waypoint/` in the repo (or `$WAYPOINT_DIR`); it ignores itself, so it never shows up in git. Each run writes
-`.waypoint/runs/<id>/` with the session's stream-json log and a `report.json` (outcome, cost, every stop attempt).
+**Keep the queue file outside the repo**, and the state stays out of it too: by default in `.git/waypoint/` (or `$WAYPOINT_DIR`),
+outside the working tree. In E2b, agents that could read the queue cited its verify command and changed their behaviour, so
+anything the agent can browse is part of the experiment. Each run writes `<state>/runs/<id>/` with the session's stream-json log
+and a `report.json` (config, outcome, cost, every stop attempt).
 
 ### What the runner sets on every session
 

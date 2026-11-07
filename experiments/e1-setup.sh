@@ -2,7 +2,7 @@
 # E1: build a throwaway repo with a queue of three small tasks, each with a check. Spends nothing.
 # Usage: experiments/e1-setup.sh <empty dir>
 # Then, from that dir (this is the paid part; it prints the worst case and needs --yes):
-#   node <waypoint>/bin/waypoint.mjs run --queue queue.json --max-budget-usd 0.05 --wall-clock 600 \
+#   node <waypoint>/bin/waypoint.mjs run --queue ../<dir>.queue.json --max-budget-usd 0.05 --wall-clock 600 \
 #     --config-dir <sandbox config dir> --yes
 set -euo pipefail
 dir=${1:?usage: e1-setup.sh <empty dir>}
@@ -23,10 +23,11 @@ T
 git add -A && git commit -qm 'E1 start'
 # verify: aos-orch by default (needs `npm link` from aos-orchestrator). E1_VERIFY replaces the command; E1_VERIFY=null turns it off.
 def='aos-orch verify --base {base}'
+export QUEUE_OUT="$(cd .. && pwd)/$(basename "$PWD").queue.json"
 E1_VERIFY="${E1_VERIFY-$def}" node - <<'Q'
 const v = process.env.E1_VERIFY;
 const task = (id, env, goal) => ({ id, goal: `In src/text.mjs, export ${goal}`, checks: [`${env}=1 node --test test/*.test.mjs`] });
-require('fs').writeFileSync('queue.json', JSON.stringify({
+require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   tasks: [
     task('slugify', 'T_SLUG', "slugify(s): lower-case, trim, replace runs of non-alphanumerics with a single '-', no leading or trailing '-'."),
@@ -35,5 +36,5 @@ require('fs').writeFileSync('queue.json', JSON.stringify({
   ],
 }, null, 2) + '\n');
 Q
-git add queue.json && git commit -qm 'E1 queue'
+echo "queue written to $QUEUE_OUT (outside the repo, so the agent cannot read the checks)"
 echo "E1 repo ready in $dir"

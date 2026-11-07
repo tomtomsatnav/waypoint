@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { stopHook } from '../lib/stop.mjs';
 import { anchorHook } from '../lib/anchor.mjs';
 import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs';
-import { initState, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
+import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 
@@ -97,6 +97,8 @@ async function main() {
       `[waypoint] model ${opts.model}, budget $${budgetUsd}/session, wall clock ${opts.wallClockSec}s, relay ${opts.relay}`,
       `[waypoint] Stop block cap set to ${blockCapFor(queue)}; waypoint's own caps: ${queue.maxBlocks} blocks/task, stall after ${queue.stallLimit}`,
       `[waypoint] worst-case spend: $${worst.toFixed(2)} (hard caps; typical runs cost far less)`,
+      `[waypoint] state: ${stateDir(opts.cwd)}`,
+      ...(insideWorkTree(opts.queuePath, opts.cwd) ? ['[waypoint] WARNING: the queue file is inside the repo, so the agent can read the checks and the verify command. Keep it outside.'] : []),
     ].join('\n') + '\n');
     if (!o.yes) { process.stderr.write('[waypoint] not started: pass --yes to run.\n'); return 0; }
     const report = await run(opts);
