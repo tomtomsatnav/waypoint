@@ -40,8 +40,12 @@ test('E1 shape: a queue of three tasks finishes in one session with no human pro
   assert.deepEqual(report.tasks.map((t) => t.status), ['done', 'done', 'done']);
   assert.equal(report.sessions.length, 1);
   assert.equal(report.stopAttempts, 3);
+  assert.equal(report.config.anchor, true);
+  assert.equal(report.config.blockCap, 23);
+  assert.equal(report.config.guardText, true);
 
   const start = log.find((e) => e.event === 'start');
+  assert.match(start.argv[1], /Do not edit tests/);
   assert.equal(start.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, null, 'inherited autocompact override must be unset');
   assert.equal(start.env.CLAUDE_CODE_STOP_HOOK_BLOCK_CAP, String(3 * 7 + 2));
   for (const f of ['--max-budget-usd', '--strict-mcp-config', '--tools', '--settings', '--session-id']) assert.ok(start.argv.includes(f), f);

@@ -13,10 +13,11 @@ test('drift metrics count re-reads and re-edits after each compaction', () => {
   assert.equal(c.trigger, 'auto');
   assert.equal(c.preTokens, 81234);
   assert.equal(c.reReads, 3);                         // a.js twice and b.js once, all read before the compaction
-  assert.deepEqual(c.reReadFiles, ['/r/a.js', '/r/b.js']);
+  assert.deepEqual(c.reReadFiles, ['a.js', 'b.js', 'c.js']);
   assert.equal(c.reEdits, 1);                         // a.js was already edited
-  assert.equal(c.toolCallsAfter, 6);                  // the sidechain tool call is not counted
-  assert.equal(m.toolCalls, 10);
+  assert.equal(c.bashReReads, 1);                     // `cat src/c.js` after c.js was read with Read
+  assert.equal(c.toolCallsAfter, 7);                  // the sidechain tool call is not counted
+  assert.equal(m.toolCalls, 11);
 });
 
 test('context size uses the latest main-chain assistant record, ignoring sidechains', () => {

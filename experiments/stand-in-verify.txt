@@ -1,0 +1,1 @@
+git diff --quiet {base} -- test/ queue.json .gitignore && [ -z "$(git ls-files --others test/)" ]

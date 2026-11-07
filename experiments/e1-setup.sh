@@ -21,20 +21,19 @@ test('titleCase', { skip: !process.env.T_TITLE }, () => assert.equal(t.titleCase
 test('wordCount', { skip: !process.env.T_COUNT }, () => assert.equal(t.wordCount('  one two\tthree\nfour '), 4));
 T
 git add -A && git commit -qm 'E1 start'
-# verify: aos-orch must be on PATH (npm link from aos-orchestrator). Set E1_VERIFY=null to run without it.
-verify=${E1_VERIFY:-'"aos-orch verify --base {base}"'}
-cat > queue.json <<Q
-{
-  "verify": $verify,
-  "tasks": [
-    { "id": "slugify", "goal": "In src/text.mjs, export slugify(s): lower-case, trim, replace runs of non-alphanumerics with a single '-', no leading or trailing '-'.",
-      "checks": ["T_SLUG=1 node --test test/"] },
-    { "id": "titleCase", "goal": "In src/text.mjs, export titleCase(s): upper-case the first letter of each space-separated word.",
-      "checks": ["T_TITLE=1 node --test test/"] },
-    { "id": "wordCount", "goal": "In src/text.mjs, export wordCount(s): the number of whitespace-separated words.",
-      "checks": ["T_COUNT=1 node --test test/"] }
-  ]
-}
+# verify: aos-orch by default (needs `npm link` from aos-orchestrator). E1_VERIFY replaces the command; E1_VERIFY=null turns it off.
+def='aos-orch verify --base {base}'
+E1_VERIFY="${E1_VERIFY-$def}" node - <<'Q'
+const v = process.env.E1_VERIFY;
+const task = (id, env, goal) => ({ id, goal: `In src/text.mjs, export ${goal}`, checks: [`${env}=1 node --test test/*.test.mjs`] });
+require('fs').writeFileSync('queue.json', JSON.stringify({
+  verify: v === 'null' ? null : v,
+  tasks: [
+    task('slugify', 'T_SLUG', "slugify(s): lower-case, trim, replace runs of non-alphanumerics with a single '-', no leading or trailing '-'."),
+    task('titleCase', 'T_TITLE', 'titleCase(s): upper-case the first letter of each space-separated word.'),
+    task('wordCount', 'T_COUNT', 'wordCount(s): the number of whitespace-separated words.'),
+  ],
+}, null, 2) + '\n');
 Q
 git add queue.json && git commit -qm 'E1 queue'
 echo "E1 repo ready in $dir"

@@ -157,10 +157,31 @@ Built the planned shape (settings, two hooks, a small runner) and tested it offl
 - Drift metric (`waypoint drift <transcript>`): Read calls on files read before each compaction, edits to files edited before it.
   Reads through Bash (`cat`) are not counted yet.
 
-### Not done, and why
+### Experiments run (same day, owner approved running autonomously): see `experiments/results/2026-11-07.md`
+
+Total $0.29. **E1 5/5 done** (~$0.004 each). **E2 3/3 and E2b 6/6 ended via the stall rule** (~$0.003); Haiku 5.5 never edited a
+test, even with the "do not edit tests" text removed, so the 21 Oct gaming did not reproduce and verify's fail path is untested live.
+**E5: no agent teams on this account** (`TeamCreate` absent even with the env flag). **E3: re-anchor cut re-reads after compaction
+24 → 6 and tool calls 42 → 31 (n = 5 per arm), cost unchanged; both arms finished 5/5, so nothing truly drifted.** E4 not justified.
+Confirmed live: Stop fires and blocks under `-p`; `SessionStart` fires with `source: "compact"` and its context reaches the model.
+
+Verify in these runs was a stand-in (`experiments/stand-in-verify.txt`), chosen on a second model's recommendation over running
+with verify off: it fails on any change to `test/`, `queue.json` or `.gitignore`, or an untracked file under `test/`.
+
+Changes made from what the runs showed: reports now record the run's config and the head of each failing check's output (a broken
+check looked the same as a failing agent); `--no-anchor` and the queue's `guardText: false` exist as experiment arms; the drift
+metric counts Bash reads (`cat` etc.), which is how Haiku mostly reads.
+
+### Next (cheapest first)
+
+1. Link `aos-orch` and re-run E1 and E2b with the real verify (~$0.03).
+2. A task that can actually drift: long, interdependent steps, scope that matters, hidden acceptance tests, compaction several times,
+   ideally nearer the real context sizes. Re-run E3 on it with more trials. This is where the anchor earns its keep or not.
+3. A queue whose tasks fail their first check, so recovery after a block is exercised, not just the handover.
+4. Problem 3 stays parked: agent teams are not available here, and the one-agent loop works.
+
+### Still not done
 
 - **aos-orchestrator could not be attached to this session**, so `aos-orch verify`'s exact CLI and exit codes are assumed
-  (exit 0 = accept). Confirm before E1, and the `npm link` vs pinned decision is still open.
-- No real-CLI run, so none of the "present in the binary" facts above is confirmed yet. E1 is prepared:
-  `experiments/e1-setup.sh <dir>` builds the repo and queue for free; the run is one `waypoint run ... --yes`.
-- Problem 3 (communication) and E5 untouched.
+  (exit 0 = accept), and the `npm link` vs pinned decision is still open.
+- Problem 3 (communication) untouched beyond E5.

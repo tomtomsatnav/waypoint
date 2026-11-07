@@ -1,0 +1,1 @@
+{"runId":"2026-11-07T23-33-06-754Z","outcome":"done","wallClockSec":47.8,"costUsd":0.011097225,"tasks":[{"id":"fix-quotes","status":"done","blocks":0,"stalls":0}],"sessions":[{"label":"session-1","sessionId":"bac7aadf-3b40-4778-8241-866415f9bdd8","exitCode":0,"signal":null,"cap":null,"costUsd":0.011097225,"maxContext":23807,"resultSubtype":"success"}],"stopAttempts":1}

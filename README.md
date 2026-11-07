@@ -10,8 +10,9 @@ rather than a framework beside it.
 - **Hard limits, outside the model:** a spend cap on every session, a wall clock, a context cap, waypoint's own count of Stop
   blocks, and a stall rule. On a cap, the runner kills the process group and asks the session for a handoff note.
 
-**Status:** built and tested against a scripted fake `claude` (no API calls). Not yet run against the real CLI: see
-[HANDOFF.md](HANDOFF.md) for the plan, what has been verified and the paid experiments still to run.
+**Status:** built, tested offline against a scripted fake `claude`, and run for real on Haiku 5.5 (E1, E2, E3, E5; $0.29 in
+total): the queue loop finishes unattended, impossible tasks end cheaply, and the re-anchor reduces repeated work after compaction a
+little. Results: [experiments/results/2026-11-07.md](experiments/results/2026-11-07.md). Plan and history: [HANDOFF.md](HANDOFF.md).
 
 ## Use
 
@@ -47,6 +48,7 @@ node <waypoint>/bin/waypoint.mjs drift <transcript.jsonl>     # re-reads / re-ed
   Leaving it out keeps `aos-orch verify`; only an explicit `null` turns it off.
 - A check passes on exit 0. `hidden: true` reports the failure but withholds the output, so acceptance tests stay hidden.
 - `cumulativeChecks` (default on) keeps earlier tasks' checks in the finish line, so a later task cannot quietly break them.
+- `guardText: false` drops the "do not edit tests" sentences from the prompts (an experiment arm: verify alone guards).
 - **Stall rule:** `stallLimit` blocks in a row with no new commit and no newly passing check end the task as blocked.
   `maxBlocks` caps blocks per task regardless.
 
@@ -71,7 +73,8 @@ plus `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` raised above waypoint's own caps, and `CL
 | `lib/runner.mjs` | Spawns and watches the session; caps; handoff note and optional relay |
 | `lib/transcript.mjs` | Context size and drift metrics from transcripts |
 | `test/fake-claude.mjs` | Scripted stand-in for `claude -p` used by the tests |
-| `experiments/e1-setup.sh` | Builds the E1 repo and queue (free); the run itself is paid |
+| `experiments/e*-setup.sh` | Build the experiment repos and queues (free); the runs themselves are paid |
+| `experiments/results/` | What was run and measured |
 
 `npm test` runs everything offline.
 

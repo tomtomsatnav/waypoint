@@ -156,3 +156,11 @@ test('no state or a finished run: nothing to anchor, nothing to block', () => {
   assert.equal(anchorText(state, dir), null);
   assert.equal(decide(state, { cwd: dir }).action, 'allow');
 });
+
+test('guardText false drops the "do not edit tests" sentences, leaving verify as the only guard', () => {
+  const { dir, state } = setup(TASKS.slice(0, 1), { guardText: false });
+  const d = decide(state, { cwd: dir });
+  assert.doesNotMatch(d.reason, /Do not edit/);
+  assert.match(d.reason, /Make the checks pass\./);
+  assert.match(state.tasks[0].lastCheck.results[0].outputHead, /add is missing/);
+});

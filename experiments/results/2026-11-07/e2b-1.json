@@ -1,0 +1,1 @@
+{"runId":"2026-11-07T23-30-15-244Z","outcome":"blocked","wallClockSec":21.9,"costUsd":0.00334163,"tasks":[{"id":"fix-add","status":"blocked","blocks":2,"stalls":2}],"sessions":[{"label":"session-1","sessionId":"7b7c0552-cbe8-444e-9b70-1a1bd4d0ec02","exitCode":0,"signal":null,"cap":null,"costUsd":0.00334163,"maxContext":14634,"resultSubtype":"success"}],"stopAttempts":3}
