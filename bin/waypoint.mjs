@@ -1,0 +1,141 @@
+#!/usr/bin/env node
+// waypoint: keeps a long-running Claude Code agent on course (re-anchor) and moving (external finish line).
+
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { stopHook } from '../lib/stop.mjs';
+import { anchorHook } from '../lib/anchor.mjs';
+import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs';
+import { initState, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
+import { head } from '../lib/git.mjs';
+import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
+
+const USAGE = `waypoint <command>
+
+  run --queue <file> --max-budget-usd <usd> [options]
+      Run the queue in one headless Claude Code session with waypoint's hooks.
+      Without --yes it only prints the plan and the worst-case spend.
+        --model <name>            default: haiku
+        --wall-clock <sec>        kill the session after this long (default 1800)
+        --max-context <tokens>    kill the session above this context size
+        --autocompact <tokens>    passed to claude --autocompact
+        --autocompact-pct <n>     sets CLAUDE_AUTOCOMPACT_PCT_OVERRIDE (unset by default, deliberately)
+        --config-dir <dir>        CLAUDE_CONFIG_DIR for the session (sandbox away from ~/.claude)
+        --relay <0|1>             after a cap: start this many fresh sessions from goal + handoff note (default 0)
+        --handoff-budget-usd <n>  budget for the handoff note (default 0.05)
+        --no-handoff              skip the handoff note after a cap
+        --fresh                   discard an unfinished earlier run's state
+        --claude <bin>            claude binary (default: $WAYPOINT_CLAUDE or claude)
+        --yes                     actually start (spends money)
+
+  init --queue <file>     Set up state for an interactive session and print the hook settings to use.
+  status                  Show the current state.
+  drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
+  hook stop|anchor        Hook entry points (read the hook payload on stdin).
+`;
+
+function parseArgs(argv) {
+  const o = { _: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (!a.startsWith('--')) { o._.push(a); continue; }
+    const k = a.slice(2);
+    if (['yes', 'fresh', 'no-handoff', 'help'].includes(k)) { o[k] = true; continue; }
+    const v = argv[++i];
+    if (v === undefined) throw new Error(`--${k} needs a value`);
+    o[k] = v;
+  }
+  return o;
+}
+
+function num(v, name) {
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new Error(`--${name} must be a number`);
+  return n;
+}
+
+function readStdin() {
+  try { return readFileSync(0, 'utf8'); } catch { return ''; }
+}
+
+async function main() {
+  const [cmd, ...rest] = process.argv.slice(2);
+  const o = parseArgs(rest);
+  if (!cmd || cmd === 'help' || o.help) { process.stdout.write(USAGE); return 0; }
+
+  if (cmd === 'hook') {
+    const raw = readStdin();
+    const payload = raw.trim() ? JSON.parse(raw) : {};
+    const which = o._[0];
+    const out = which === 'stop' ? stopHook(payload) : which === 'anchor' ? anchorHook(payload) : (() => { throw new Error(`unknown hook ${which}`); })();
+    if (out) process.stdout.write(JSON.stringify(out) + '\n');
+    return 0;
+  }
+
+  if (cmd === 'run') {
+    if (!o.queue) throw new Error('--queue is required');
+    const budgetUsd = num(o['max-budget-usd'], 'max-budget-usd');
+    if (!(budgetUsd > 0)) throw new Error('--max-budget-usd is required: every run needs a spend cap');
+    const opts = {
+      cwd: process.cwd(), queuePath: resolve(o.queue), model: o.model || 'haiku', budgetUsd,
+      wallClockSec: num(o['wall-clock'], 'wall-clock') ?? 1800,
+      maxContextTokens: num(o['max-context'], 'max-context'),
+      autocompact: num(o.autocompact, 'autocompact'),
+      autocompactPct: num(o['autocompact-pct'], 'autocompact-pct'),
+      configDir: o['config-dir'], claudeBin: o.claude, relay: num(o.relay, 'relay') ?? 0,
+      handoffBudgetUsd: num(o['handoff-budget-usd'], 'handoff-budget-usd') ?? 0.05,
+      handoff: !o['no-handoff'], fresh: !!o.fresh,
+      log: (m) => process.stderr.write(m + '\n'),
+    };
+    const queue = loadQueue(opts.queuePath);
+    const worst = worstCaseUsd(opts);
+    process.stderr.write([
+      `[waypoint] queue: ${queue.tasks.length} task(s): ${queue.tasks.map((t) => t.id).join(', ')}`,
+      `[waypoint] verify: ${queue.verify ?? '(off: the queue sets verify to null)'}`,
+      `[waypoint] model ${opts.model}, budget $${budgetUsd}/session, wall clock ${opts.wallClockSec}s, relay ${opts.relay}`,
+      `[waypoint] Stop block cap set to ${blockCapFor(queue)}; waypoint's own caps: ${queue.maxBlocks} blocks/task, stall after ${queue.stallLimit}`,
+      `[waypoint] worst-case spend: $${worst.toFixed(2)} (hard caps; typical runs cost far less)`,
+    ].join('\n') + '\n');
+    if (!o.yes) { process.stderr.write('[waypoint] not started: pass --yes to run.\n'); return 0; }
+    const report = await run(opts);
+    process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+    return report.outcome === 'done' ? 0 : 1;
+  }
+
+  if (cmd === 'init') {
+    if (!o.queue) throw new Error('--queue is required');
+    const cwd = process.cwd();
+    const queue = loadQueue(resolve(o.queue));
+    const h = head(cwd);
+    if (!h) throw new Error('not a git repository with at least one commit');
+    const dir = stateDir(cwd);
+    saveState(dir, initState({ queue, queuePath: o.queue, base: h, head: h }));
+    writeJsonAtomic(resolve(dir, 'settings.json'), buildSettings(queue));
+    process.stdout.write(JSON.stringify(buildSettings(queue), null, 2) + '\n');
+    process.stderr.write(`[waypoint] state in ${dir}. Start claude with --settings ${resolve(dir, 'settings.json')} and set CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=${blockCapFor(queue)}.\n`);
+    return 0;
+  }
+
+  if (cmd === 'status') {
+    const st = loadState(stateDir(process.cwd()));
+    if (!st) { process.stdout.write('no waypoint state here\n'); return 1; }
+    const lines = st.tasks.map((t, i) => `${i === st.current && !st.finished ? '>' : ' '} ${t.id.padEnd(20)} ${t.status.padEnd(8)} blocks ${t.blocks} stalls ${t.stalls}${t.lastCheck ? `  last check: ${t.lastCheck.passed ? 'pass' : 'fail'}` : ''}`);
+    process.stdout.write(`finished: ${st.finished ?? 'no'}\n${lines.join('\n')}\n`);
+    return 0;
+  }
+
+  if (cmd === 'drift') {
+    if (!o._[0]) throw new Error('drift needs a transcript path');
+    process.stdout.write(JSON.stringify(driftMetrics(readTranscript(o._[0])), null, 2) + '\n');
+    return 0;
+  }
+
+  throw new Error(`unknown command "${cmd}"\n\n${USAGE}`);
+}
+
+main().then((c) => { process.exitCode = c; }, (e) => {
+  process.stderr.write(`waypoint: ${e.message}\n`);
+  // Exit 2 from a hook means "block" to Claude Code, so a crashing hook exits 1 (a non-blocking error) instead.
+  process.exitCode = process.argv[2] === 'hook' ? 1 : 2;
+});

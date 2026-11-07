@@ -122,3 +122,45 @@ E5 together are about $0.30.
 - Tests without real API calls (fixture transcripts and hook payloads; a scripted fake `claude`, as aos-orchestrator's
   `orchestrator/test/fake-claude.mjs`). Zero dependencies, Node 18+, as in the sibling repos.
 - Work on a branch, open a draft PR. Report what was built, what was measured and what is left, including what did not work.
+
+---
+
+## Session 2 (7 Nov 2026): first build
+
+Built the planned shape (settings, two hooks, a small runner) and tested it offline against a scripted fake `claude`
+(`test/fake-claude.mjs`, 24 tests, `npm test`). **No paid run yet.** See README for usage.
+
+### Found in the 2.1.319 binary (string search, free; still to confirm by running)
+
+- **Block cap is 8 consecutive Stop blocks** (`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP ?? 8`, `0` disables it). Past it, Claude Code ends the
+  turn with "A hook blocked the turn from ending N consecutive times". **Handing over the next task is itself a block**, so a queue
+  run in one turn hits 8 quickly. The runner therefore sets the cap to `tasks × (maxBlocks + 1) + 2`, and waypoint's own caps
+  (6 blocks per task, stall after 2) bind first. Whether the count resets mid-turn is still unknown: E1 shows it.
+- **`PostCompact` cannot inject context.** Its `hookSpecificOutput` has no `additionalContext` (it gets `compact_summary` only).
+  But **`SessionStart` fires with `source: "compact"`** (sources: startup, resume, clear, compact, fork) and does accept
+  `additionalContext`. So the re-anchor is one `SessionStart` hook for all sources. E3 must confirm it fires after auto-compaction under `-p`.
+- `Stop` also accepts `hookSpecificOutput.additionalContext`; the block is `{"decision":"block","reason":...}` (or exit 2 + stderr).
+  So **a crashing hook must not exit 2**: waypoint's hooks exit 1 on error (non-blocking).
+- Stop payload: `stop_hook_active`, `last_assistant_message`. Waypoint records both in its events but keeps its own counters.
+- Budget end: result `subtype: "error_max_budget_usd"` (also `error_max_turns`, `error_during_execution`).
+
+### Decisions taken (small, reversible)
+
+- `verify` is on by default; a queue must write `"verify": null` to switch it off. It is passed `{base}` = the task's start commit.
+- Earlier tasks' checks stay in the finish line (`cumulativeChecks`), so task 3 cannot break task 1 unseen.
+- `hidden: true` checks report pass/fail only. Fenced output defangs `</check-output` so output cannot close the fence.
+- The stall rule ends the task and the run (the queue is not skipped ahead), since later tasks may depend on it.
+- `.waypoint/` writes its own `.gitignore` (`*`): otherwise `git add -A` commits the state and verify sees it as a change.
+- After a cap: handoff note via `--resume <id> --tools Write --max-turns 3` with hooks disabled (`WAYPOINT_DISABLE=1`), budget $0.05.
+  A relay session is **off by default** (`--relay 1` to allow one).
+- The CLI never starts a session without `--yes`; without it, it prints the plan and the worst-case spend from the caps.
+- Drift metric (`waypoint drift <transcript>`): Read calls on files read before each compaction, edits to files edited before it.
+  Reads through Bash (`cat`) are not counted yet.
+
+### Not done, and why
+
+- **aos-orchestrator could not be attached to this session**, so `aos-orch verify`'s exact CLI and exit codes are assumed
+  (exit 0 = accept). Confirm before E1, and the `npm link` vs pinned decision is still open.
+- No real-CLI run, so none of the "present in the binary" facts above is confirmed yet. E1 is prepared:
+  `experiments/e1-setup.sh <dir>` builds the repo and queue for free; the run is one `waypoint run ... --yes`.
+- Problem 3 (communication) and E5 untouched.
