@@ -201,5 +201,13 @@ failure found was in waypoint or the harness, and is fixed: the "do not edit tes
 not fix their own stale tests), parallel trials shared `/tmp`, and Claude Code's compaction-thrash ending skips the Stop hook.
 Details and per-run data: `experiments/results/2026-11-07.md`. Total experiment spend ~$5.45.
 
+### 500k attempt (E7) and re-reads (8 Nov)
+
+The full fenceline build (7 tasks, 110 hidden tests) with compaction off: **3/3 done, 110/110, peak 320k–355k, no drift,
+$1.44–1.91 each.** The work never needed 500k. Re-reads after compaction are mostly cheap targeted lookups (~1 cent a run); a
+`PreCompact` hook does steer the summary (confirmed) but `--precompact-notes` showed no measurable effect, so it is opt-in. The
+lever is compaction timing: earlier compaction was cheaper at equal quality, so the runner now defaults to `--autocompact 200000`.
+`aos-orch` is pinned (package.json, `scripts/install-aos-orch.sh`). Total spend ~$13.
+
 ### Still not done
 - Problem 3 (communication) untouched beyond E5.
