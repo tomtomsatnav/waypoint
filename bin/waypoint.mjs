@@ -11,6 +11,7 @@ import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, s
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 import { doctor } from '../lib/doctor.mjs';
+import { formatReport, readReport } from '../lib/report.mjs';
 
 const USAGE = `waypoint <command>
 
@@ -36,6 +37,7 @@ const USAGE = `waypoint <command>
 
   init --queue <file>     Set up state for an interactive session and print the hook settings to use.
   status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
+  report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
   doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
                           Exit 0 if all are present, 1 otherwise.
   drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
@@ -145,6 +147,12 @@ async function main() {
     if (!st) { process.stdout.write('no waypoint state here\n'); return 1; }
     const lines = st.tasks.map((t, i) => `${i === st.current && !st.finished ? '>' : ' '} ${t.id.padEnd(20)} ${t.status.padEnd(8)} blocks ${t.blocks} stalls ${t.stalls}${t.lastCheck ? `  last check: ${t.lastCheck.passed ? 'pass' : 'fail'}` : ''}`);
     process.stdout.write(`finished: ${st.finished ?? 'no'}\n${lines.join('\n')}\n`);
+    return 0;
+  }
+
+  if (cmd === 'report') {
+    if (!o._[0]) throw new Error('report needs a report.json path');
+    process.stdout.write(formatReport(readReport(o._[0])));
     return 0;
   }
 

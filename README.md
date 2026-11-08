@@ -27,6 +27,7 @@ cd <repo to work in>
 node <waypoint>/bin/waypoint.mjs run --queue queue.json --max-budget-usd 0.25 --wall-clock 1800          # prints plan and worst case
 node <waypoint>/bin/waypoint.mjs run --queue queue.json --max-budget-usd 0.25 --wall-clock 1800 --yes    # spends money
 node <waypoint>/bin/waypoint.mjs status
+node <waypoint>/bin/waypoint.mjs report <run>/report.json     # outcome, cost, wall clock, tasks, sessions
 node <waypoint>/bin/waypoint.mjs doctor                       # checks node, git, claude, aos-orch, bwrap; starts nothing
 node <waypoint>/bin/waypoint.mjs drift <transcript.jsonl>     # re-reads / re-edits after each compaction
 ```
@@ -82,6 +83,7 @@ plus `--autocompact 200000` by default (compaction near 160k: on Haiku 5.5 earli
 | `lib/anchor.mjs` | SessionStart re-anchor |
 | `lib/checks.mjs` | Runs checks and verify; fences output |
 | `lib/doctor.mjs` | `waypoint doctor`: finds the required tools on `PATH` (runs none of them) |
+| `lib/report.mjs` | `waypoint report`: readable summary of a run's `report.json` |
 | `lib/runner.mjs` | Spawns and watches the session; caps; handoff note and optional relay |
 | `lib/transcript.mjs` | Context size and drift metrics from transcripts |
 | `test/fake-claude.mjs` | Scripted stand-in for `claude -p` used by the tests |
