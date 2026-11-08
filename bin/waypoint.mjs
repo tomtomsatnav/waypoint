@@ -7,7 +7,7 @@ import { stopHook } from '../lib/stop.mjs';
 import { anchorHook, ANCHOR_MODES } from '../lib/anchor.mjs';
 import { precompactHook } from '../lib/precompact.mjs';
 import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs';
-import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
+import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, statusReport, writeJsonAtomic } from '../lib/state.mjs';
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 import { doctor } from '../lib/doctor.mjs';
@@ -35,7 +35,7 @@ const USAGE = `waypoint <command>
         --yes                     actually start (spends money)
 
   init --queue <file>     Set up state for an interactive session and print the hook settings to use.
-  status                  Show the current state.
+  status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
   doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
                           Exit 0 if all are present, 1 otherwise.
   drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
@@ -48,7 +48,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help'].includes(k)) { o[k] = true; continue; }
+    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json'].includes(k)) { o[k] = true; continue; }
     const v = argv[++i];
     if (v === undefined) throw new Error(`--${k} needs a value`);
     o[k] = v;
@@ -137,6 +137,11 @@ async function main() {
 
   if (cmd === 'status') {
     const st = loadState(stateDir(process.cwd()));
+    if (o.json) {
+      if (!st) { process.stdout.write(JSON.stringify({ state: null }) + '\n'); return 1; }
+      process.stdout.write(JSON.stringify(statusReport(st)) + '\n');
+      return 0;
+    }
     if (!st) { process.stdout.write('no waypoint state here\n'); return 1; }
     const lines = st.tasks.map((t, i) => `${i === st.current && !st.finished ? '>' : ' '} ${t.id.padEnd(20)} ${t.status.padEnd(8)} blocks ${t.blocks} stalls ${t.stalls}${t.lastCheck ? `  last check: ${t.lastCheck.passed ? 'pass' : 'fail'}` : ''}`);
     process.stdout.write(`finished: ${st.finished ?? 'no'}\n${lines.join('\n')}\n`);
