@@ -183,3 +183,15 @@ test('a crashing hook exits 1 (non-blocking), never 2 (which Claude Code reads a
   const none = execFileSync(process.execPath, [BIN, 'hook', 'stop'], { input: JSON.stringify({ cwd: '/tmp/nowhere-waypoint' }), encoding: 'utf8' });
   assert.equal(none, '');
 });
+
+test('WAYPOINT_SETTING_SOURCES adds --setting-sources to agent sessions', async () => {
+  const { buildArgs } = await import('../lib/runner.mjs');
+  const before = process.env.WAYPOINT_SETTING_SOURCES;
+  try {
+    delete process.env.WAYPOINT_SETTING_SOURCES;
+    assert.ok(!buildArgs({ prompt: 'p', model: 'haiku', budgetUsd: 1, sessionId: 's' }).includes('--setting-sources'));
+    process.env.WAYPOINT_SETTING_SOURCES = 'project,local';
+    const a = buildArgs({ prompt: 'p', model: 'haiku', budgetUsd: 1, sessionId: 's' });
+    assert.equal(a[a.indexOf('--setting-sources') + 1], 'project,local');
+  } finally { if (before === undefined) delete process.env.WAYPOINT_SETTING_SOURCES; else process.env.WAYPOINT_SETTING_SOURCES = before; }
+});
