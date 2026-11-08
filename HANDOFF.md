@@ -207,7 +207,7 @@ The full fenceline build (7 tasks, 110 hidden tests) with compaction off: **3/3 
 $1.44–1.91 each.** The work never needed 500k. Re-reads after compaction are mostly cheap targeted lookups (~1 cent a run); a
 `PreCompact` hook does steer the summary (confirmed) but `--precompact-notes` showed no measurable effect, so it is opt-in. The
 lever is compaction timing: earlier compaction was cheaper at equal quality, so the runner now defaults to `--autocompact 200000`.
-`aos-orch` is pinned (package.json, `scripts/install-aos-orch.sh`). Total spend ~$13.
+`aos-orch` is pinned (package.json, `scripts/install-aos-orch.sh`). Total spend ~$11.40.
 
 ### Still not done
 - Problem 3 (communication) untouched beyond E5.
