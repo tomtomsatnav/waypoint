@@ -10,6 +10,7 @@
 //   { "sleep": <ms> }
 //   { "grandchild": "<pidfile>" }  start a long-lived child process and write its pid (tests process-group kill)
 //   { "budget": true }             end as the CLI does when --max-budget-usd is reached
+//   { "thrash": true }             end as the CLI does when autocompact thrashes (rapid_refill_breaker, no Stop hook)
 // When the steps run out, the fake stops (running the Stop hook) and exits whatever it says.
 // FAKE_CLAUDE_LOG: file to append one JSON line per event (argv, hook outputs) for assertions.
 
@@ -90,6 +91,11 @@ for (const step of script.steps) {
     const c = spawn('sleep', ['300'], { stdio: 'ignore' });
     writeFileSync(step.grandchild, String(c.pid));
   } else if (step.budget) finish('error_max_budget_usd');
+  else if (step.thrash) {
+    // As 2.1.319 ends a session whose autocompact thrashes: a success subtype, is_error, exit 1, no Stop hook.
+    emit({ type: 'result', subtype: 'success', is_error: true, terminal_reason: 'rapid_refill_breaker', session_id: sessionId, total_cost_usd: 0.01, result: 'Autocompact is thrashing' });
+    process.exit(1);
+  }
   else if (step.stop) { if (!tryStop()) finish(); }
 }
 while (tryStop()) { /* out of script: keep "stopping" until allowed or capped */ }

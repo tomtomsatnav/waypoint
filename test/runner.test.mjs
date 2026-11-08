@@ -106,6 +106,14 @@ test('a context cap kills the session; a budget end is recognised as a cap', asy
   assert.equal(report.sessions[0].cap, 'budget');
   assert.equal(report.sessions[1].label, 'handoff-1');
   assert.equal(report.outcome, 'cap:budget');
+
+  dir = makeRepo();
+  writeQueue(dir, TASKS.slice(0, 1));
+  ({ report } = await runFake(dir, [{ thrash: true }]));
+  assert.equal(report.sessions[0].cap, 'compaction-thrash');
+  assert.equal(report.sessions[0].terminalReason, 'rapid_refill_breaker');
+  assert.equal(report.sessions[1].label, 'handoff-1', 'a thrash leaves the task open, so it takes the emergency exit');
+  assert.equal(report.outcome, 'cap:compaction-thrash');
 });
 
 test('if Claude Code\'s own block cap ends the turn first, the run is reported as stopped early, not done', async () => {
