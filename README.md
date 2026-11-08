@@ -52,6 +52,9 @@ node <waypoint>/bin/waypoint.mjs drift <transcript.jsonl>     # re-reads / re-ed
   Leaving it out keeps `aos-orch verify`; only an explicit `null` turns it off.
 - A check passes on exit 0. `hidden: true` reports the failure but withholds the output, so acceptance tests stay hidden.
 - `cumulativeChecks` (default on) keeps earlier tasks' checks in the finish line, so a later task cannot quietly break them.
+- `prepare` (per task): a shell command waypoint runs when the task starts and commits as itself, e.g. to hand the task its
+  acceptance tests. Verify protects whatever it adds from then on.
+- `redact`: strings replaced with `<hidden>` in everything the agent is shown from the checks (keep hidden paths hidden).
 - `guardText: false` drops the "do not edit tests" sentences from the prompts (an experiment arm: verify alone guards).
 - **Stall rule:** `stallLimit` blocks in a row with no new commit and no newly passing check end the task as blocked.
   `maxBlocks` caps blocks per task regardless.

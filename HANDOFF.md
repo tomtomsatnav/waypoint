@@ -209,5 +209,13 @@ $1.44–1.91 each.** The work never needed 500k. Re-reads after compaction are m
 lever is compaction timing: earlier compaction was cheaper at equal quality, so the runner now defaults to `--autocompact 200000`.
 `aos-orch` is pinned (package.json, `scripts/install-aos-orch.sh`). Total spend ~$11.40.
 
+### Haiku vs Sonnet, fairly (8 Nov, afternoon)
+
+The earlier fenceline results were inflated: every Haiku run had read the hidden tests next to its repo. Fully hidden tests were
+unfair the other way (fenceline's tests encode details its spec does not state). The realistic setup, each task arriving with its
+own tests via the new `prepare` field and protected by verify: **Haiku 3/3 and Sonnet 3/3 built all of fenceline (110/110)**.
+Sonnet: half the tool calls and context, ~3 min faster, ~2x the cost ($1.92 vs $0.97 a build). Opus not needed. Waypoint gained
+`redact` (hide strings from check output) and `prepare`. Total spend ~$22.90.
+
 ### Still not done
 - Problem 3 (communication) untouched beyond E5.
