@@ -4,6 +4,9 @@ import { join, dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+// Hermetic: never touch a live run's state, whatever this process inherited (an agent running waypoint's tests under waypoint).
+delete process.env.WAYPOINT_DIR;
+
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const FAKE = join(ROOT, 'test', 'fake-claude.mjs');
 export const BIN = join(ROOT, 'bin', 'waypoint.mjs');

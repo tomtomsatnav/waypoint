@@ -70,6 +70,7 @@ async function main() {
   if (!cmd || cmd === 'help' || o.help) { process.stdout.write(USAGE); return 0; }
 
   if (cmd === 'hook') {
+    if (typeof o['state-dir'] === 'string') process.env.WAYPOINT_DIR = o['state-dir']; // this hook process only
     const raw = readStdin();
     const payload = raw.trim() ? JSON.parse(raw) : {};
     const which = o._[0];

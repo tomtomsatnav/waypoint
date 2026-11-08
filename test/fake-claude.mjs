@@ -31,6 +31,7 @@ log({ event: 'start', argv, sessionId, env: {
   CLAUDE_CODE_STOP_HOOK_BLOCK_CAP: process.env.CLAUDE_CODE_STOP_HOOK_BLOCK_CAP ?? null,
   CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: process.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE ?? null,
   WAYPOINT_DISABLE: process.env.WAYPOINT_DISABLE ?? null,
+  WAYPOINT_DIR: process.env.WAYPOINT_DIR ?? null,
 } });
 
 function runHooks(event, payload) {

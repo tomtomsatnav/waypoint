@@ -46,6 +46,9 @@ test('E1 shape: a queue of three tasks finishes in one session with no human pro
 
   const start = log.find((e) => e.event === 'start');
   assert.match(start.argv[1], /Do not edit tests/);
+  assert.equal(start.env.WAYPOINT_DIR, null, 'the agent must not inherit where the live state is (anything it runs could overwrite it)');
+  const settings = JSON.parse(readFileSync(start.argv[start.argv.indexOf('--settings') + 1], 'utf8'));
+  assert.match(settings.hooks.Stop[0].hooks[0].command, /hook stop --state-dir "/);
   assert.equal(start.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, null, 'inherited autocompact override must be unset');
   assert.equal(start.env.CLAUDE_CODE_STOP_HOOK_BLOCK_CAP, String(3 * 7 + 2));
   for (const f of ['--max-budget-usd', '--strict-mcp-config', '--tools', '--settings', '--session-id']) assert.ok(start.argv.includes(f), f);
