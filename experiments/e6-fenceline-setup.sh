@@ -14,7 +14,12 @@ dir=$(pwd)
 git init -q -b main
 git config user.email e6@example.com && git config user.name E6
 cp "$src/README.md" README.md
-SRC="$src" DIR="$dir" ACCEPT="$dir.accept" node - <<'G'
+# The hidden tests and the queue live in a random folder away from the repo, and the queue tells waypoint to redact that
+# path from everything the agent sees. (Before this, every Haiku run found <repo>.accept next to the repo and read the tests.)
+# E6_HIDDEN_ROOT overrides where the random folder goes. Its path is printed last ("hidden: <path>") for the harness and
+# written nowhere the agent can browse.
+hidden=$(mktemp -d "${E6_HIDDEN_ROOT:-/tmp}/wp-hidden-XXXXXXXX")
+SRC="$src" DIR="$dir" ACCEPT="$hidden/accept" node - <<'G'
 const fs = require('fs'), path = require('path');
 const { SRC, DIR, ACCEPT } = process.env;
 const pkg = JSON.parse(fs.readFileSync(`${SRC}/package.json`, 'utf8'));
@@ -55,7 +60,7 @@ for (const t of ['glob', 'fences', 'compile', 'hook', 'cli', ...(FULL ? ['scope'
 G
 git add -A && git commit -qm 'E6 start: spec only'
 def='aos-orch verify --repo . --base {base}'
-export QUEUE_OUT="$dir.queue.json" ACCEPT="$dir.accept"
+export QUEUE_OUT="$hidden/queue.json" ACCEPT="$hidden/accept" HIDDEN="$hidden"
 E6_VERIFY="${E6_VERIFY-$def}" node - <<'Q'
 const v = process.env.E6_VERIFY, A = process.env.ACCEPT;
 // Each repo's checks get their own TMPDIR: fenceline's hook test asserts that $TMPDIR/fl-never/... does not exist, and in
@@ -64,6 +69,7 @@ const t = (id, goal, tests) => ({ id, goal, checks: tests.map((x) => ({ name: `f
 require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   checkTimeoutSec: 600,
+  redact: [process.env.HIDDEN],
   tasks: [
     t('glob', 'You are building fenceline from its spec: README.md is the product, INTERFACE.md lists the modules and exports. Start with src/glob.mjs: globToRegExp and matchGlob (and matchAny), the gitignore-style path matching that fences use. Commit when done.', ['glob']),
     t('fences', 'Next, src/fences.mjs as in INTERFACE.md: the fences file format and validation, crossings (which fences a file operation crosses), the preview, and finding the files a shell command writes (bashWriteTargets and its helpers). Use src/glob.mjs. Commit when done.', ['fences']),
@@ -77,5 +83,6 @@ require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   ],
 }, null, 2) + '\n');
 Q
-echo "queue written to $QUEUE_OUT and fenceline's tests to $dir.accept (outside the repo)"
+echo "queue written to $QUEUE_OUT and fenceline's tests to $hidden/accept (random folder, redacted from check output)"
 echo "E6 repo ready in $dir"
+echo "hidden: $hidden"
