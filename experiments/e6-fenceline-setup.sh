@@ -55,8 +55,26 @@ lines.push('## Executables', '', '- `bin/fenceline.mjs`: the CLI described in th
   '  and records the session trail under `$FENCELINE_HOME` (default `~/.fenceline`).',
   ...(FULL ? ['- `viewer/scope/template.html`, `viewer/scope/scope.css`, `viewer/scope/scope.js`: the self-contained scope map page that `fenceline scope` writes.'] : []), '');
 fs.writeFileSync('INTERFACE.md', lines.join('\n'));
+// Data assets the full build's tests need and no agent could invent: the fonts the scope page embeds and the demo
+// recording the viewer lists. Given in the starting repo (the earlier E7 runs copied them from fenceline's tests instead).
+if (FULL) {
+  fs.mkdirSync('dashboard/ui/fonts', { recursive: true });
+  for (const f of fs.readdirSync(`${SRC}/dashboard/ui/fonts`)) fs.copyFileSync(`${SRC}/dashboard/ui/fonts/${f}`, `dashboard/ui/fonts/${f}`);
+  fs.cpSync(`${SRC}/recordings`, 'recordings', { recursive: true });
+  fs.appendFileSync('INTERFACE.md', '\n## Assets provided\n\n- `dashboard/ui/fonts/*.woff2`: the fonts the scope page embeds (base64, from this folder).\n- `recordings/`: a demo session recording the viewer lists.\n');
+}
 fs.mkdirSync('test');
 fs.writeFileSync('test/smoke.test.mjs', "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\ntest('package.json names fenceline', async () => { const fs = await import('node:fs'); assert.equal(JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url))).name, 'fenceline'); });\n");
+// E6_TESTS=staged: fenceline's original tests (unchanged) wait in <hidden>/staged and each task's prepare copies its tests into
+// the repo's test/ and commits them as waypoint, so the agent works against tests it can read and verify protects them.
+// This is the realistic case (a ticket arrives with its tests); with tests fully hidden, fenceline's tests encode details
+// its spec does not state (e.g. a whitespace-only glob must throw), and every model ended up guessing.
+if (process.env.E6_TESTS === 'staged') {
+  fs.mkdirSync(`${ACCEPT}/../staged/test`, { recursive: true });
+  for (const t of ['glob', 'fences', 'compile', 'hook', 'cli', ...(FULL ? ['scope', 'viewer-layout', 'viewer-server'] : [])])
+    fs.copyFileSync(`${SRC}/test/${t}.test.mjs`, `${ACCEPT}/../staged/test/${t}.test.mjs`);
+  if (FULL) fs.cpSync(`${SRC}/test/fixtures`, `${ACCEPT}/../staged/test/fixtures`, { recursive: true });
+}
 // Hidden tests, pointed at the agent's repo.
 fs.mkdirSync(`${ACCEPT}/test`, { recursive: true });
 if (FULL) fs.cpSync(`${SRC}/test/fixtures`, `${ACCEPT}/fixtures`, { recursive: true });
@@ -76,7 +94,12 @@ E6_VERIFY="${E6_VERIFY-$def}" node - <<'Q'
 const v = process.env.E6_VERIFY, A = process.env.ACCEPT;
 // Each repo's checks get their own TMPDIR: fenceline's hook test asserts that $TMPDIR/fl-never/... does not exist, and in
 // parallel trials sharing /tmp another trial's hook created it (E6 D-4 blocked on that alone, with correct code).
-const t = (id, goal, tests) => ({ id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300 })) });
+const STAGED = process.env.E6_TESTS === 'staged', SG = `${process.env.HIDDEN}/staged/test`;
+const t = (id, goal, tests) => STAGED
+  ? { id, goal: `${goal} This task's tests are in test/ (${tests.map((x) => `${x}.test.mjs`).join(', ')}); make them pass without changing them.`,
+      prepare: `mkdir -p test && ${tests.map((x) => `cp ${SG}/${x}.test.mjs test/`).join(' && ')}${tests.includes('scope') ? ` && cp -r ${SG}/fixtures test/` : ''}`,
+      checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test test/${x}.test.mjs`, timeoutSec: 300 })) }
+  : { id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300 })) };
 require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   checkTimeoutSec: 600,

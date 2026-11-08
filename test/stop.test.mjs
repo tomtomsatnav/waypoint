@@ -38,6 +38,20 @@ test('a passing task hands over the next goal verbatim; the last one allows the 
   assert.deepEqual(state.tasks.map((t) => t.status), ['done', 'done', 'done']);
 });
 
+test('a task\'s prepare command runs at handover and is committed by waypoint before the task starts', () => {
+  const tasks = [TASKS[0], { ...TASKS[1], prepare: "mkdir -p accept && echo 'sub tests' > accept/sub.txt" }];
+  const { dir, state } = setup(tasks);
+  sh(dir, addFn('add', 'return a + b;'));
+  const before = head(dir);
+  const d = decide(state, { cwd: dir });
+  assert.equal(d.why, 'handover');
+  const start = state.tasks[1].startSha;
+  assert.notEqual(start, before, 'the prepared files are a new commit');
+  assert.equal(sh(dir, 'git log -1 --format="%an %s"'), 'waypoint waypoint: prepare task sub');
+  assert.equal(sh(dir, 'cat accept/sub.txt'), 'sub tests');
+  assert.equal(sh(dir, 'git status --short'), '');
+});
+
 test('a failing finish line blocks with the output fenced as data and the goal repeated', () => {
   const { dir, state } = setup();
   const d = decide(state, { cwd: dir });

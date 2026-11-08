@@ -126,6 +126,14 @@ test('if Claude Code\'s own block cap ends the turn first, the run is reported a
   assert.equal(report.tasks[0].status, 'active');
 });
 
+test('the first task\'s prepare runs and is committed before the session starts; verify\'s base is that commit', async () => {
+  const dir = makeRepo();
+  writeQueue(dir, [{ ...TASKS[0], prepare: 'echo given > given.txt' }]);
+  const { report } = await runFake(dir, [{ shell: 'test -f given.txt && ' + addFn('add', 'return a + b;') }, { stop: true }]);
+  assert.equal(report.outcome, 'done', 'the agent saw the prepared file');
+  assert.match(sh(dir, 'git log --format="%an %s" | tail -2 | head -1'), /^waypoint waypoint: prepare task add$/);
+});
+
 test('the PreCompact hook is installed only when asked, and prints plain text', () => {
   const q = { tasks: [{ id: 'x', goal: 'g', checks: [] }], checkTimeoutSec: 60 };
   assert.equal(buildSettings(q).hooks.PreCompact, undefined);
