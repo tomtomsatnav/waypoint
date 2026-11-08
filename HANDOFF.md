@@ -217,5 +217,12 @@ own tests via the new `prepare` field and protected by verify: **Haiku 3/3 and S
 Sonnet: half the tool calls and context, ~3 min faster, ~2x the cost ($1.92 vs $0.97 a build). Opus not needed. Waypoint gained
 `redact` (hide strings from check output) and `prepare`. Total spend ~$22.90.
 
+### Dogfooding (E9, 8 Nov)
+
+waypoint ran a real queue of its own backlog (doctor, status --json, report) with acceptance tests handed over via `prepare`.
+It found two waypoint bugs (the live state's location leaking into the agent's environment, then into the checks), the second
+diagnosed and fixed by the agent itself; after the fixes the queue ran clean (3/3, $0.02) and the work is merged. Opus, one
+fenceline build for comparison: 110/110, $4.78 (Haiku $0.97, Sonnet $1.92).
+
 ### Still not done
 - Problem 3 (communication) untouched beyond E5.
