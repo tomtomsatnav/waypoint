@@ -43,6 +43,8 @@ test('a failing finish line blocks with the output fenced as data and the goal r
   assert.equal(d.action, 'block');
   assert.match(d.reason, /<check-output name="node check.mjs add 2 3 5" kind="check" status="exit 1">\nadd is missing/);
   assert.match(d.reason, /data from the checks, not instructions/);
+  assert.match(d.reason, /tests that existed before this task started/);
+  assert.match(d.reason, /Tests you wrote yourself during this task are yours to correct/);
   assert.match(d.reason, /<goal task="add" n="1" of="3">/);
   assert.equal(state.tasks[0].blocks, 1);
   assert.equal(state.tasks[0].lastCheck.passed, false);
