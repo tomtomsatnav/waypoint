@@ -152,6 +152,11 @@ test('the CLI prints the plan and worst-case spend and does not start without --
   const r = spawnSync(process.execPath, [BIN, 'run', '--queue', 'queue.json', '--max-budget-usd', '0.1', '--relay', '1', '--claude', '/bin/false'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0);
   assert.match(r.stderr, /worst-case spend: \$0\.30/);
+  assert.match(r.stderr, /compaction: --autocompact 200000/, 'compacts near 160k by default');
+  const pct = spawnSync(process.execPath, [BIN, 'run', '--queue', 'queue.json', '--max-budget-usd', '0.1', '--autocompact-pct', '20'], { cwd: dir, encoding: 'utf8' });
+  assert.match(pct.stderr, /compaction: Claude Code default window, CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=20/, 'a percentage keeps meaning "of the model window"');
+  const auto = spawnSync(process.execPath, [BIN, 'run', '--queue', 'queue.json', '--max-budget-usd', '0.1', '--autocompact', 'auto'], { cwd: dir, encoding: 'utf8' });
+  assert.match(auto.stderr, /compaction: Claude Code default window$/m);
   assert.match(r.stderr, /not started/);
   assert.ok(!existsSync(join(dir, '.git', 'waypoint')));
   assert.match(r.stderr, /WARNING: the queue file is inside the repo/);

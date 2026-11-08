@@ -65,7 +65,8 @@ and a `report.json` (config, outcome, cost, every stop attempt).
 
 `-p --output-format stream-json --verbose --include-hook-events --model <m> --max-budget-usd <usd> --strict-mcp-config
 --tools Bash,Edit,Write,Read,Glob,Grep --allowedTools <same> --permission-mode acceptEdits --session-id <uuid> --settings <hooks>`,
-plus `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` raised above waypoint's own caps, and `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` unset unless
+plus `--autocompact 200000` by default (compaction near 160k: on Haiku 5.5 earlier compaction was cheaper at the same quality),
+`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` raised above waypoint's own caps, and `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` unset unless
 `--autocompact-pct` is given. Spawned with `detached: true`; caps kill with `process.kill(-pid, 'SIGKILL')` and wait for exit.
 
 ## Layout

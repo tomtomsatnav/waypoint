@@ -19,7 +19,8 @@ const USAGE = `waypoint <command>
         --model <name>            default: haiku
         --wall-clock <sec>        kill the session after this long (default 1800)
         --max-context <tokens>    kill the session above this context size
-        --autocompact <tokens>    passed to claude --autocompact
+        --autocompact <tokens>    passed to claude --autocompact (default 200000, i.e. compaction near 160k, unless
+                                  --autocompact-pct is given; `auto` keeps Claude Code's own default)
         --autocompact-pct <n>     sets CLAUDE_AUTOCOMPACT_PCT_OVERRIDE (unset by default, deliberately)
         --config-dir <dir>        CLAUDE_CONFIG_DIR for the session (sandbox away from ~/.claude)
         --relay <0|1>             after a cap: start this many fresh sessions from goal + handoff note (default 0)
@@ -86,7 +87,11 @@ async function main() {
       cwd: process.cwd(), queuePath: resolve(o.queue), model: o.model || 'haiku', budgetUsd,
       wallClockSec: num(o['wall-clock'], 'wall-clock') ?? 1800,
       maxContextTokens: num(o['max-context'], 'max-context'),
-      autocompact: num(o.autocompact, 'autocompact'),
+      // Default: compact against a 200k window (fires near 160k) whatever the model's own window. On Haiku 5.5 (1M) earlier
+      // compaction was cheaper at the same quality (E6/E7: $0.18-0.35 near 100k, $0.57 near 200k, $1.77 uncompacted at 344k),
+      // since prompts above 100k bill higher and each turn re-sends the context. `auto` keeps Claude Code's own default.
+      // Only when --autocompact-pct is absent too, so a percentage keeps meaning "of the model's window".
+      autocompact: o.autocompact === 'auto' ? undefined : o.autocompact !== undefined ? num(o.autocompact, 'autocompact') : o['autocompact-pct'] !== undefined ? undefined : 200000,
       autocompactPct: num(o['autocompact-pct'], 'autocompact-pct'),
       configDir: o['config-dir'], claudeBin: o.claude, relay: num(o.relay, 'relay') ?? 0,
       handoffBudgetUsd: num(o['handoff-budget-usd'], 'handoff-budget-usd') ?? 0.05,
@@ -100,6 +105,7 @@ async function main() {
       `[waypoint] queue: ${queue.tasks.length} task(s): ${queue.tasks.map((t) => t.id).join(', ')}`,
       `[waypoint] verify: ${queue.verify ?? '(off: the queue sets verify to null)'}`,
       `[waypoint] model ${opts.model}, budget $${budgetUsd}/session, wall clock ${opts.wallClockSec}s, relay ${opts.relay}`,
+      `[waypoint] compaction: ${opts.autocompact ? `--autocompact ${opts.autocompact}` : 'Claude Code default window'}${opts.autocompactPct != null ? `, CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=${opts.autocompactPct}` : ''}`,
       `[waypoint] Stop block cap set to ${blockCapFor(queue)}; waypoint's own caps: ${queue.maxBlocks} blocks/task, stall after ${queue.stallLimit}`,
       `[waypoint] worst-case spend: $${worst.toFixed(2)} (hard caps; typical runs cost far less)`,
       `[waypoint] state: ${stateDir(opts.cwd)}`,
