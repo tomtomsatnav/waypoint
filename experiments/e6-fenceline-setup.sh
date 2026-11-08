@@ -33,9 +33,20 @@ const mods = fs.readdirSync(`${SRC}/src`).filter((f) => f.endsWith('.mjs')).sort
 if (FULL) mods.push('viewer/layout.mjs', 'viewer/server.mjs');
 for (const f of mods) {
   lines.push(`## ${f}`, '', '```js');
-  for (const l of fs.readFileSync(`${SRC}/${f}`, 'utf8').split('\n')) {
-    const m = l.match(/^export (async function|function|const) [^=({]+(\([^)]*\))?/);
-    if (m) lines.push(m[0].replace(/\s+$/, '') + (m[1] === 'const' ? ' = ...' : ' { ... }'));
+  // E6_DOCS=1 (the default) keeps the doc comment written directly above each export: the contract as a design document
+  // would state it (return shapes, op names, what null means), with no bodies. With the hidden tests really hidden, names
+  // and signatures alone left every model guessing the fences contract (Haiku 34/110, Sonnet 40/110, both stuck on fences).
+  const src = fs.readFileSync(`${SRC}/${f}`, 'utf8').split('\n');
+  for (let i = 0; i < src.length; i++) {
+    const m = src[i].match(/^export (async function|function|const) [^=({]+(\([^)]*\))?/);
+    if (!m) continue;
+    if (process.env.E6_DOCS !== '0') {
+      let j = i - 1; const doc = [];
+      if (/\*\/\s*$/.test(src[j] || '')) { while (j >= 0 && !/^\s*\/\*\*/.test(src[j])) doc.unshift(src[j--]); if (j >= 0) doc.unshift(src[j]); }
+      else while (j >= 0 && /^\s*\/\/ /.test(src[j])) doc.unshift(src[j--]);
+      if (doc.length) lines.push(...doc);
+    }
+    lines.push(m[0].replace(/\s+$/, '') + (m[1] === 'const' ? ' = ...' : ' { ... }'));
   }
   lines.push('```', '');
 }
