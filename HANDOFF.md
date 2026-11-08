@@ -193,5 +193,13 @@ metric counts Bash reads (`cat` etc.), which is how Haiku mostly reads.
   the runner now drops them. Use a fresh `--config-dir` per run.
 - `npm link` works for now; pinning a version is still the owner's call.
 
+### Drift at realistic sizes (8 Nov): not reproduced
+
+E3b, E5-big, E5-het and E6 (building fenceline's core from its README; 83 hidden tests): about 90 runs with up to five
+compactions and contexts to ~200k. **No drift in any run.** The fenceline build finishes unattended for $0.18–0.57; every
+failure found was in waypoint or the harness, and is fixed: the "do not edit tests" guard was broader than verify (agents would
+not fix their own stale tests), parallel trials shared `/tmp`, and Claude Code's compaction-thrash ending skips the Stop hook.
+Details and per-run data: `experiments/results/2026-11-07.md`. Total experiment spend ~$5.45.
+
 ### Still not done
 - Problem 3 (communication) untouched beyond E5.

@@ -52,7 +52,9 @@ def='aos-orch verify --repo . --base {base}'
 export QUEUE_OUT="$dir.queue.json" ACCEPT="$dir.accept"
 E6_VERIFY="${E6_VERIFY-$def}" node - <<'Q'
 const v = process.env.E6_VERIFY, A = process.env.ACCEPT;
-const t = (id, goal, tests) => ({ id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300 })) });
+// Each repo's checks get their own TMPDIR: fenceline's hook test asserts that $TMPDIR/fl-never/... does not exist, and in
+// parallel trials sharing /tmp another trial's hook created it (E6 D-4 blocked on that alone, with correct code).
+const t = (id, goal, tests) => ({ id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300 })) });
 require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   checkTimeoutSec: 600,
