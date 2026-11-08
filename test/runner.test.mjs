@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { run, buildArgs, buildEnv } from '../lib/runner.mjs';
+import { run, buildArgs, buildEnv, buildSettings } from '../lib/runner.mjs';
 import { makeRepo, writeQueue, writeScript, addFn, sh, FAKE, BIN, TASKS } from './helpers.mjs';
 
 // Dead means no such process, or a zombie waiting for a reaper that this container may not have.
@@ -124,6 +124,14 @@ test('if Claude Code\'s own block cap ends the turn first, the run is reported a
   assert.ok(log.some((e) => e.event === 'block-cap-override'));
   assert.equal(report.outcome, 'stopped-early');
   assert.equal(report.tasks[0].status, 'active');
+});
+
+test('the PreCompact hook is installed only when asked, and prints plain text', () => {
+  const q = { tasks: [{ id: 'x', goal: 'g', checks: [] }], checkTimeoutSec: 60 };
+  assert.equal(buildSettings(q).hooks.PreCompact, undefined);
+  assert.match(buildSettings(q, { precompact: true }).hooks.PreCompact[0].hooks[0].command, /hook precompact$/);
+  const out = execFileSync(process.execPath, [BIN, 'hook', 'precompact'], { input: JSON.stringify({ cwd: '/tmp/nowhere-waypoint' }), encoding: 'utf8' });
+  assert.equal(out, '', 'no state: nothing to add to the summary');
 });
 
 test('every session needs a budget; the autocompact override is set only when asked', () => {

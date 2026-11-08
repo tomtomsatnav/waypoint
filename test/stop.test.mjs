@@ -6,6 +6,7 @@ import { decide } from '../lib/stop.mjs';
 import { fence } from '../lib/checks.mjs';
 import { initState, loadQueue } from '../lib/state.mjs';
 import { anchorText } from '../lib/anchor.mjs';
+import { precompactText } from '../lib/precompact.mjs';
 import { head } from '../lib/git.mjs';
 import { makeRepo, writeQueue, sh, addFn, TASKS } from './helpers.mjs';
 
@@ -162,6 +163,18 @@ test('anchor modes: auto drops the verbatim goal after a compaction only; full k
   assert.match(compact, /Working tree \(git status --short\)/);
   assert.match(anchorText(state, dir, 'compact', 'full'), goal);
   assert.doesNotMatch(anchorText(state, dir, 'startup', 'facts'), goal);
+});
+
+test('precompact notes ask the compactor to keep per-file knowledge and list the files changed in this task', () => {
+  const { dir, state } = setup();
+  sh(dir, addFn('add', 'return a + b;'));
+  const t = precompactText(state, dir);
+  assert.match(t, /For every file you read or edited/);
+  assert.match(t, /Do not restate the task goal/);
+  assert.match(t, /maths\.mjs\s+\|\s+1 \+/);
+  assert.ok(t.length < 10000, 'Claude Code cuts PreCompact output at 10,000 characters');
+  state.finished = 'done';
+  assert.equal(precompactText(state, dir), null);
 });
 
 test('no state or a finished run: nothing to anchor, nothing to block', () => {

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stopHook } from '../lib/stop.mjs';
 import { anchorHook, ANCHOR_MODES } from '../lib/anchor.mjs';
+import { precompactHook } from '../lib/precompact.mjs';
 import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs';
 import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
 import { head } from '../lib/git.mjs';
@@ -26,6 +27,7 @@ const USAGE = `waypoint <command>
         --no-handoff              skip the handoff note after a cap
         --no-anchor               leave out the SessionStart re-anchor hook (control arm for E3)
         --anchor-mode <m>         auto (default: goal + facts at start, facts only after compaction), full, facts
+        --precompact-notes        PreCompact hook: tell the compactor to keep what was learned from each file (fewer re-reads)
         --fresh                   discard an unfinished earlier run's state
         --claude <bin>            claude binary (default: $WAYPOINT_CLAUDE or claude)
         --yes                     actually start (spends money)
@@ -42,7 +44,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'help'].includes(k)) { o[k] = true; continue; }
+    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help'].includes(k)) { o[k] = true; continue; }
     const v = argv[++i];
     if (v === undefined) throw new Error(`--${k} needs a value`);
     o[k] = v;
@@ -70,6 +72,7 @@ async function main() {
     const raw = readStdin();
     const payload = raw.trim() ? JSON.parse(raw) : {};
     const which = o._[0];
+    if (which === 'precompact') { const t = precompactHook(payload); if (t) process.stdout.write(t + '\n'); return 0; } // plain text, not JSON
     const out = which === 'stop' ? stopHook(payload) : which === 'anchor' ? anchorHook(payload) : (() => { throw new Error(`unknown hook ${which}`); })();
     if (out) process.stdout.write(JSON.stringify(out) + '\n');
     return 0;
@@ -87,7 +90,7 @@ async function main() {
       autocompactPct: num(o['autocompact-pct'], 'autocompact-pct'),
       configDir: o['config-dir'], claudeBin: o.claude, relay: num(o.relay, 'relay') ?? 0,
       handoffBudgetUsd: num(o['handoff-budget-usd'], 'handoff-budget-usd') ?? 0.05,
-      handoff: !o['no-handoff'], fresh: !!o.fresh, anchor: !o['no-anchor'], anchorMode: o['anchor-mode'],
+      handoff: !o['no-handoff'], fresh: !!o.fresh, anchor: !o['no-anchor'], anchorMode: o['anchor-mode'], precompactNotes: !!o['precompact-notes'],
       log: (m) => process.stderr.write(m + '\n'),
     };
     if (opts.anchorMode && !ANCHOR_MODES.includes(opts.anchorMode)) throw new Error(`--anchor-mode must be one of ${ANCHOR_MODES.join(', ')}`);
