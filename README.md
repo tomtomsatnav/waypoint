@@ -6,7 +6,8 @@ rather than a framework beside it.
 - **Stopping:** a `Stop` hook runs the external finish line (the task's checks and `aos-orch verify`). Pass hands over the
   next task in the queue; fail blocks the stop with the failing output fenced as data. The agent saying "done" counts for nothing.
 - **Drift:** a `SessionStart` hook (which also fires after every compaction, with `source: "compact"`) re-anchors the agent with
-  the goal verbatim, `git log`, `git status` and the last check result. Facts only, never the agent's own summary.
+  `git log`, `git status`, the tasks already accepted and the last check result, plus the goal verbatim at startup. After a
+  compaction it injects the facts only (`--anchor-mode auto`): re-injecting the goal there was followed by bulk re-reads in E3.
 - **Hard limits, outside the model:** a spend cap on every session, a wall clock, a context cap, waypoint's own count of Stop
   blocks, and a stall rule. On a cap, the runner kills the process group and asks the session for a handoff note.
 
@@ -16,7 +17,10 @@ little. Results: [experiments/results/2026-11-07.md](experiments/results/2026-11
 
 ## Use
 
-Node 18+, no dependencies. `aos-orch` on `PATH` (for example `npm link` in aos-orchestrator) unless the queue turns verify off.
+Node 18+, no dependencies. `aos-orch` on `PATH` (`npm link` in aos-orchestrator) unless the queue turns verify off; on Linux its
+check sandbox needs bubblewrap (`apt-get install bubblewrap`), and it fails closed without it. Give each run a fresh
+`--config-dir`: the runner drops the parent's `CLAUDE*` environment, but a reused config dir keeps whatever account, skills and
+plugins earlier sessions synced into it.
 
 ```sh
 cd <repo to work in>
@@ -32,7 +36,7 @@ node <waypoint>/bin/waypoint.mjs drift <transcript.jsonl>     # re-reads / re-ed
 
 ```json
 {
-  "verify": "aos-orch verify --base {base}",
+  "verify": "aos-orch verify --repo . --base {base}",
   "maxBlocks": 6,
   "stallLimit": 2,
   "cumulativeChecks": true,

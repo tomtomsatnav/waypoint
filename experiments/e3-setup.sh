@@ -35,7 +35,7 @@ for (let n = 1; n <= 10; n++) {
 fs.writeFileSync('test/quote.test.mjs', `import { test } from 'node:test';\nimport assert from 'node:assert/strict';\n${tests.join('\n')}\n`);
 G
 git add -A && git commit -qm 'E3 start'
-def='aos-orch verify --base {base}'
+def='aos-orch verify --repo . --base {base}'
 export QUEUE_OUT="$(cd .. && pwd)/$(basename "$PWD").queue.json"
 E3_VERIFY="${E3_VERIFY-$def}" node - <<'Q'
 const v = process.env.E3_VERIFY;

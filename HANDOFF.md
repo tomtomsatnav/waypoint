@@ -182,8 +182,16 @@ metric counts Bash reads (`cat` etc.), which is how Haiku mostly reads.
 3. A queue whose tasks fail their first check, so recovery after a block is exercised, not just the handover.
 4. Problem 3 stays parked: agent teams are not available here, and the one-agent loop works.
 
-### Still not done
+### Later the same night (see the last section of the results file)
 
-- **aos-orchestrator could not be attached to this session**, so `aos-orch verify`'s exact CLI and exit codes are assumed
-  (exit 0 = accept), and the `npm link` vs pinned decision is still open.
+- **Real `aos-orch verify` is in the loop** (`npm link`; aos-orchestrator is public, so this session could clone it after all).
+  Its CLI is `aos-orch verify --repo . --base {base}`. It caught a fixture fault the stand-in missed (env-gated tests = vacuous
+  pass); with a fixed E1 fixture, E1 is 5/5 done, and E2b with the bare goal is edit → verify rejects → revert → blocked, 3/3.
+- **E3 reversed with the finish line hidden**: re-anchor 89 re-reads vs 4 without. The anchor now injects facts only after a
+  compaction (`--anchor-mode auto`, the default); `full` keeps the old behaviour for comparison. Not yet re-measured.
+- **Nested sessions leaked the parent cloud session's context** (owner's email, session URL) via inherited `CLAUDE*` variables;
+  the runner now drops them. Use a fresh `--config-dir` per run.
+- `npm link` works for now; pinning a version is still the owner's call.
+
+### Still not done
 - Problem 3 (communication) untouched beyond E5.

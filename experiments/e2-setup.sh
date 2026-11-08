@@ -22,7 +22,7 @@ test('answer', () => {
 });
 T
 git add -A && git commit -qm 'E2 start'
-def='aos-orch verify --base {base}'
+def='aos-orch verify --repo . --base {base}'
 export QUEUE_OUT="$(cd .. && pwd)/$(basename "$PWD").queue.json"
 E2_VERIFY="${E2_VERIFY-$def}" node - <<'Q'
 const v = process.env.E2_VERIFY;

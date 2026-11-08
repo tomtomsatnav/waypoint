@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stopHook } from '../lib/stop.mjs';
-import { anchorHook } from '../lib/anchor.mjs';
+import { anchorHook, ANCHOR_MODES } from '../lib/anchor.mjs';
 import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs';
 import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
 import { head } from '../lib/git.mjs';
@@ -25,6 +25,7 @@ const USAGE = `waypoint <command>
         --handoff-budget-usd <n>  budget for the handoff note (default 0.05)
         --no-handoff              skip the handoff note after a cap
         --no-anchor               leave out the SessionStart re-anchor hook (control arm for E3)
+        --anchor-mode <m>         auto (default: goal + facts at start, facts only after compaction), full, facts
         --fresh                   discard an unfinished earlier run's state
         --claude <bin>            claude binary (default: $WAYPOINT_CLAUDE or claude)
         --yes                     actually start (spends money)
@@ -86,9 +87,10 @@ async function main() {
       autocompactPct: num(o['autocompact-pct'], 'autocompact-pct'),
       configDir: o['config-dir'], claudeBin: o.claude, relay: num(o.relay, 'relay') ?? 0,
       handoffBudgetUsd: num(o['handoff-budget-usd'], 'handoff-budget-usd') ?? 0.05,
-      handoff: !o['no-handoff'], fresh: !!o.fresh, anchor: !o['no-anchor'],
+      handoff: !o['no-handoff'], fresh: !!o.fresh, anchor: !o['no-anchor'], anchorMode: o['anchor-mode'],
       log: (m) => process.stderr.write(m + '\n'),
     };
+    if (opts.anchorMode && !ANCHOR_MODES.includes(opts.anchorMode)) throw new Error(`--anchor-mode must be one of ${ANCHOR_MODES.join(', ')}`);
     const queue = loadQueue(opts.queuePath);
     const worst = worstCaseUsd(opts);
     process.stderr.write([

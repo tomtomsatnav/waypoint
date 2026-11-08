@@ -105,7 +105,7 @@ test('the queue keeps aos-orch verify unless it explicitly sets verify to null',
   const dir = makeRepo();
   const p = join(dir, 'q.json');
   writeFileSync(p, JSON.stringify({ tasks: TASKS }));
-  assert.equal(loadQueue(p).verify, 'aos-orch verify --base {base}');
+  assert.equal(loadQueue(p).verify, 'aos-orch verify --repo . --base {base}');
   writeFileSync(p, JSON.stringify({ verify: null, tasks: TASKS }));
   assert.equal(loadQueue(p).verify, null);
 });
@@ -140,7 +140,7 @@ test('re-anchor text is built from the goal, git and the last check, and lists f
   sh(dir, addFn('sub', 'return a + b;')); // wrong on purpose
   decide(state, { cwd: dir });
   writeFileSync(join(dir, 'scratch.txt'), 'wip\n');
-  const t = anchorText(state, dir, 'compact');
+  const t = anchorText(state, dir, 'compact', 'full');
   assert.match(t, /Re-anchor after session compact/);
   assert.match(t, /Add an exported function sub\(a, b\) to maths\.mjs\./);
   assert.match(t, /already finished and accepted \(do not redo\): add\./);
@@ -148,6 +148,18 @@ test('re-anchor text is built from the goal, git and the last check, and lists f
   assert.match(t, /\?\? scratch\.txt/);
   assert.match(t, /FAIL check: node check.mjs sub 5 3 2/);
   assert.match(t, /PASS check: node check.mjs add 2 3 5/);
+});
+
+test('anchor modes: auto drops the verbatim goal after a compaction only; full keeps it; facts never has it', () => {
+  const { dir, state } = setup();
+  const goal = /Add an exported function add\(a, b\)/;
+  assert.match(anchorText(state, dir, 'startup'), goal);
+  const compact = anchorText(state, dir, 'compact');
+  assert.doesNotMatch(compact, goal);
+  assert.match(compact, /Current task: "add" \(1 of 3\); its goal is unchanged\./);
+  assert.match(compact, /Working tree \(git status --short\)/);
+  assert.match(anchorText(state, dir, 'compact', 'full'), goal);
+  assert.doesNotMatch(anchorText(state, dir, 'startup', 'facts'), goal);
 });
 
 test('no state or a finished run: nothing to anchor, nothing to block', () => {

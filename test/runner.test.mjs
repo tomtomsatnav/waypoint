@@ -121,6 +121,13 @@ test('if Claude Code\'s own block cap ends the turn first, the run is reported a
 test('every session needs a budget; the autocompact override is set only when asked', () => {
   assert.throws(() => buildArgs({ prompt: 'x', model: 'haiku', sessionId: 's' }), /max-budget-usd/);
   assert.equal(buildEnv({ dir: '/d', blockCap: 5, autocompactPct: 50 }).CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, '50');
+  process.env.CLAUDE_CODE_REMOTE_SESSION_ID = 'parent';
+  try {
+    const env = buildEnv({ dir: '/d', blockCap: 5 });
+    assert.equal(env.CLAUDE_CODE_REMOTE_SESSION_ID, undefined, 'the parent session\'s context must not leak into the child');
+    assert.equal(env.CLAUDE_CODE_STOP_HOOK_BLOCK_CAP, '5');
+    assert.equal(buildEnv({ dir: '/d', blockCap: 5, inheritClaudeEnv: true }).CLAUDE_CODE_REMOTE_SESSION_ID, 'parent');
+  } finally { delete process.env.CLAUDE_CODE_REMOTE_SESSION_ID; }
 });
 
 test('the CLI prints the plan and worst-case spend and does not start without --yes', () => {
