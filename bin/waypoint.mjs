@@ -10,6 +10,7 @@ import { run, worstCaseUsd, buildSettings, blockCapFor } from '../lib/runner.mjs
 import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, writeJsonAtomic } from '../lib/state.mjs';
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
+import { doctor } from '../lib/doctor.mjs';
 
 const USAGE = `waypoint <command>
 
@@ -35,6 +36,8 @@ const USAGE = `waypoint <command>
 
   init --queue <file>     Set up state for an interactive session and print the hook settings to use.
   status                  Show the current state.
+  doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
+                          Exit 0 if all are present, 1 otherwise.
   drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
   hook stop|anchor        Hook entry points (read the hook payload on stdin).
 `;
@@ -138,6 +141,12 @@ async function main() {
     const lines = st.tasks.map((t, i) => `${i === st.current && !st.finished ? '>' : ' '} ${t.id.padEnd(20)} ${t.status.padEnd(8)} blocks ${t.blocks} stalls ${t.stalls}${t.lastCheck ? `  last check: ${t.lastCheck.passed ? 'pass' : 'fail'}` : ''}`);
     process.stdout.write(`finished: ${st.finished ?? 'no'}\n${lines.join('\n')}\n`);
     return 0;
+  }
+
+  if (cmd === 'doctor') {
+    const d = doctor();
+    process.stdout.write(d.lines.join('\n') + '\n');
+    return d.ok ? 0 : 1;
   }
 
   if (cmd === 'drift') {
