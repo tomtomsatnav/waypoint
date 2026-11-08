@@ -57,3 +57,16 @@ bottom centre with cooldown sweeps. The world should be stylised low-poly with w
 All of the above works: two or more players can log in from separate tabs, see each other, group up, fight monsters together,
 complete quests, trade, chat, and run the dungeon; everything persists across a server restart; no errors in the browser console
 or the server log during normal play.
+
+## Art direction
+
+`references/art/` holds six paintings as concept art for the world's mood, light and palette (see `references/art/ART.md`).
+Translate them into the game's stylised low-poly world; do not copy them literally:
+
+- **Cinderhold, the starting village** (`village.jpg`): pastoral, golden late-afternoon light, soft greens, a lake and distant peaks.
+- **Whisperwood, the forest wilds** (`wilds.jpg`): wild, dense and stormy, dark greens, mist and low cloud over crags.
+- **The Ruined Highlands** (`ruins.jpg`, `bard.jpg`): broken columns and arches, a moonlit lake, a fortress on sheer cliffs.
+- **Skies and distance** (`sierra.jpg`): luminous, hazy, warm skies with depth and atmospheric perspective.
+- **The Hollow Crypt dungeon** (`dungeon.jpg`): a vast underground hall lit by molten fire, deep reds and black.
+
+Each zone should be recognisable from its painting's palette and mood.
