@@ -215,3 +215,21 @@ test('guardText false drops the "do not edit tests" sentences, leaving verify as
   assert.match(d.reason, /Make the checks pass\./);
   assert.match(state.tasks[0].lastCheck.results[0].outputHead, /add is missing/);
 });
+
+test('explain: a failing check\'s explain command replaces the raw output the agent sees, and is recorded', () => {
+  const tasks = [{ id: 'x', goal: 'g', checks: [{ name: 'hidden acceptance', run: 'echo "assert.equal(f(\'  \'), 42) SECRET"; exit 1',
+    explain: 'grep -q SECRET "$WAYPOINT_CHECK_OUTPUT_FILE" && echo "A whitespace-only input must be rejected. ($WAYPOINT_CHECK_NAME)"' }] }];
+  const { dir, state } = setup(tasks);
+  const d = decide(state, { cwd: dir });
+  assert.match(d.reason, /form="explained">\nA whitespace-only input must be rejected\. \(hidden acceptance\)/);
+  assert.doesNotMatch(d.reason, /SECRET|assert\.equal/);
+  assert.match(state.tasks[0].lastCheck.results[0].explanation, /whitespace-only/);
+});
+
+test('explain: if the explain command fails or prints nothing, the raw output is shown as before', () => {
+  const tasks = [{ id: 'x', goal: 'g', checks: [{ name: 'c', run: 'echo raw-failure; exit 1', explain: 'exit 3' }] }];
+  const { dir, state } = setup(tasks);
+  const d = decide(state, { cwd: dir });
+  assert.match(d.reason, /raw-failure/);
+  assert.equal(state.tasks[0].lastCheck.results[0].explainFailed, 3);
+});

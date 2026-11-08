@@ -99,7 +99,9 @@ const t = (id, goal, tests) => STAGED
   ? { id, goal: `${goal} This task's tests are in test/ (${tests.map((x) => `${x}.test.mjs`).join(', ')}); make them pass without changing them.`,
       prepare: `mkdir -p test && ${tests.map((x) => `cp ${SG}/${x}.test.mjs test/`).join(' && ')}${tests.includes('scope') ? ` && cp -r ${SG}/fixtures test/` : ''}`,
       checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test test/${x}.test.mjs`, timeoutSec: 300 })) }
-  : { id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300 })) };
+  : { id, goal, checks: tests.map((x) => ({ name: `fenceline ${x} tests`, run: `mkdir -p ${A}/tmp && TMPDIR=${A}/tmp node --test ${A}/test/${x}.test.mjs`, timeoutSec: 300,
+      // E6_EXPLAIN (E11): a command that turns a failing hidden check into feedback (e.g. scripts/explain-with-claude.mjs).
+      ...(process.env.E6_EXPLAIN ? { explain: process.env.E6_EXPLAIN, explainTimeoutSec: 300 } : {}) })) };
 require('fs').writeFileSync(process.env.QUEUE_OUT, JSON.stringify({
   verify: v === 'null' ? null : v,
   checkTimeoutSec: 600,
