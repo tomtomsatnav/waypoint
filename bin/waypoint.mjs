@@ -11,6 +11,7 @@ import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, s
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 import { doctor } from '../lib/doctor.mjs';
+import { autopilot, loadAp, statusText } from '../lib/autopilot.mjs';
 import { formatReport, readReport } from '../lib/report.mjs';
 
 const USAGE = `waypoint <command>
@@ -38,6 +39,12 @@ const USAGE = `waypoint <command>
   init --queue <file>     Set up state for an interactive session and print the hook settings to use.
   status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
   report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
+  autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
+                          [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m] [--yes]
+                          From a brief to a shipped project in the current repo: plan, work, review, repeat, pacing on plan
+                          usage and waiting out limits. Without --yes it only prints what it would do.
+  autopilot resume [--yes]  Carry on from .git/autopilot after a stop or a restart.
+  autopilot status        Milestones, tasks, models, spend and usage.
   doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
                           Exit 0 if all are present, 1 otherwise.
   drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
@@ -154,6 +161,26 @@ async function main() {
     if (!o._[0]) throw new Error('report needs a report.json path');
     process.stdout.write(formatReport(readReport(o._[0])));
     return 0;
+  }
+
+  if (cmd === 'autopilot') {
+    const sub = o._[0];
+    if (sub === 'status') { process.stdout.write(statusText(loadAp(process.cwd()))); return 0; }
+    if (sub !== 'start' && sub !== 'resume') throw new Error('autopilot start|resume|status');
+    const existing = loadAp(process.cwd());
+    if (sub === 'start' && existing) throw new Error('an autopilot run already exists here: use autopilot resume');
+    if (sub === 'resume' && !existing) throw new Error('nothing to resume here');
+    const opts = { repo: process.cwd(), brief: o['brief-file'] ? readFileSync(o['brief-file'], 'utf8') : undefined,
+      references: o.references ? String(o.references).split(',').map((s) => s.trim()).filter(Boolean) : [],
+      budgetUsd: num(o['budget-usd'], 'budget-usd'), deadlineHours: num(o.hours, 'hours'), strongModel: o['strong-model'],
+      configDir: o['config-dir'], claude: o.claude, verify: o.verify, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'),
+      forceModel: o['force-model'] };
+    if (sub === 'start' && (!opts.brief || !(opts.budgetUsd > 0))) throw new Error('autopilot start needs --brief-file and --budget-usd');
+    process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: budget $${opts.budgetUsd ?? existing?.policy.budgetUsd}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
+    if (!o.yes) { process.stderr.write('[autopilot] not started: pass --yes to run (spends money).\n'); return 0; }
+    const st = await autopilot(opts);
+    process.stdout.write(statusText(st));
+    return st.shipped ? 0 : 1;
   }
 
   if (cmd === 'doctor') {
