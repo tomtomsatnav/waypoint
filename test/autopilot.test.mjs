@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decide, parseUsage } from '../lib/usage.mjs';
 import { pick, record, rate } from '../lib/routing.mjs';
-import { planPrompt, STANDIN_VERIFY } from '../lib/autopilot.mjs';
+import { planPrompt, reviewPrompt, researchPrompt, stuckResearchPrompt, overheadLeft, reviewSpec, STANDIN_VERIFY } from '../lib/autopilot.mjs';
 
 const H = 3600000, NOW = Date.UTC(2026, 10, 8, 12);
 const usage = (u5, u7) => parseUsage({ status: 'allowed', unifiedWindows: { five_hour: { utilization: u5, resetsAt: (NOW + 2 * H) / 1000, status: 'allowed' }, seven_day: { utilization: u7, resetsAt: (NOW + 60 * H) / 1000, status: 'allowed' } } }, NOW);
@@ -53,4 +53,49 @@ test('autopilot: the planner is told to write tests and checks, not the implemen
   assert.match(p, /Do not write the implementation/);
   assert.match(p, /web-smoke\.mjs/);
   assert.match(STANDIN_VERIFY, /--diff-filter=DM \{base\}/);
+});
+
+test('autopilot: research, planning and reviews are held to the overhead share; past it, reviews go light', () => {
+  const st = { policy: { budgetUsd: 60 }, overheadUsd: 0 };
+  assert.equal(overheadLeft(st), 12, '20% of $60 by default');
+  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 3, light: false }, 'routine reviews run on Sonnet, capped at $3');
+  st.overheadUsd = 10.5;
+  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 1.5, light: false }, 'a review never spends more than is left');
+  st.overheadUsd = 11.6;
+  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 0.5, light: true }, 'below $1 left: a light review so the loop can still plan');
+  assert.equal(overheadLeft({ policy: {}, overheadUsd: 99 }), Infinity, 'no budget, no cap');
+  assert.equal(overheadLeft({ policy: { budgetUsd: 100, overheadShare: 0.3 }, overheadUsd: 0 }), 30);
+});
+
+test('autopilot: the researcher looks for unstated expectations, each with a check; the plan must cover them', () => {
+  const r = researchPrompt({ brief: 'make an MMORPG' });
+  assert.match(r, /make an MMORPG/);
+  assert.match(r, /WebSearch/);
+  assert.match(r, /EXPECTATIONS\.md/);
+  assert.match(r, /Check:/);
+  assert.match(r, /Do not write code/);
+  const withExp = planPrompt({ brief: 'b', expectations: true }, '/x/m.json');
+  assert.match(withExp, /EXPECTATIONS\.md/);
+  assert.doesNotMatch(planPrompt({ brief: 'b' }, '/x/m.json'), /EXPECTATIONS\.md/, 'only when research wrote one');
+  assert.match(withExp, /thin slice of the whole product/, 'milestone 1 is a usable slice, not every foundation');
+});
+
+test('autopilot: reviews play as an experienced user unless light; a confirm review is framed as the final check', () => {
+  const st = { brief: 'b', expectations: true };
+  const full = reviewPrompt(st, 2, '/x/r.json', 'evidence');
+  assert.match(full, /Playwright/);
+  assert.match(full, /experienced user/);
+  assert.match(full, /EXPECTATIONS\.md/);
+  const light = reviewPrompt(st, 2, '/x/r.json', 'evidence', { light: true });
+  assert.doesNotMatch(light, /Playwright/);
+  assert.match(light, /do not run the app/);
+  assert.match(reviewPrompt(st, 2, '/x/r.json', 'e', { confirm: true }), /final reviewer/);
+});
+
+test('autopilot: stuck research gets the task, its failing checks and where to write notes', () => {
+  const p = stuckResearchPrompt({ id: 'm2-combat', goal: 'tab-target combat' }, '- combat test\nexpected 1 got 0', '/r/m2-combat.md');
+  assert.match(p, /m2-combat: tab-target combat/);
+  assert.match(p, /expected 1 got 0/);
+  assert.match(p, /\/r\/m2-combat\.md/);
+  assert.match(p, /do not change it/);
 });

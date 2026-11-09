@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
-# E13 on your own machine (macOS or Linux): three arms build the Emberfall MMORPG from the same brief and art for up to 52 hours.
-#   autopilot: waypoint autopilot (Fable plans and reviews, cheaper models build, routed by task type), budget $60
+# E13 on your own machine (macOS or Linux): arms build the Emberfall MMORPG from the same brief and art for up to 52 hours.
+#   autopilot: waypoint autopilot (research, Fable plans, cheaper models build, Sonnet reviews), budget $60
 #   single:    one Claude Code session (Sonnet) with the brief, until it stops by itself
 #   loop:      Claude Code (Sonnet) told "continue" every time it stops
-# All three share your Claude plan and pause for its usage limits, resuming after the reset.
+# All arms share your Claude plan and pause for its usage limits, resuming after the reset.
 #
 #   ./run-e13.sh start    set up (first time) and start, or carry on after a reboot; safe to run again
 #   ./run-e13.sh status   is it running, time left (no per-arm quality, the review is blind)
 #   ./run-e13.sh stop     stop everything (start carries on later)
-#   ./run-e13.sh serve    boot the three finished games blind on ports 3101-3103 (done automatically at the end)
+#   ./run-e13.sh serve    boot the finished games blind on ports 3101 upwards (done automatically at the end)
 #   ./run-e13.sh reveal   which port was which (only after your blind feedback)
+#
+# Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52),
+# E13_BUDGET (60), E13_COMPARE (a finished arm's repo to include, unchanged, in the blind review; e.g. last run's winner).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 WORK=${E13_WORK:-$HOME/emberfall-e13}; HOURS=${E13_HOURS:-52}; BUDGET=${E13_BUDGET:-60}
-export WAYPOINT_SETTING_SOURCES=project,local   # keep your own Claude Code settings, hooks and CLAUDE.md out of all three arms
+ARMS=${E13_ARMS:-autopilot single loop}; COMPARE=${E13_COMPARE:-}
+export WAYPOINT_SETTING_SOURCES=project,local   # keep your own Claude Code settings, hooks and CLAUDE.md out of every arm
 export NODE_PATH="$WORK/tools/node_modules"      # so every arm can require('playwright') to test in a real browser
 say() { echo "[e13 $(date -u +%H:%M)] $*" >> "$WORK/supervise.log"; }
 alive() { pgrep -f "$1" >/dev/null 2>&1; }
+has() { case " $ARMS " in *" $1 "*) return 0;; esac; return 1; }
+[ -f "$WORK/.arms-run" ] && ARMS=$(cat "$WORK/.arms-run")   # a started run keeps its arms
 
 setup() {
   mkdir -p "$WORK"
@@ -29,13 +35,19 @@ setup() {
     echo "installing Playwright and Chromium into $WORK/tools (once)"
     mkdir -p "$WORK/tools" && (cd "$WORK/tools" && npm init -y >/dev/null && npm install --no-audit --no-fund playwright@1 >/dev/null && npx playwright install chromium) || { echo "Playwright install failed"; exit 1; }
   fi
-  for a in autopilot single loop; do
+  for a in $ARMS; do
     [ -d "$WORK/$a/.git" ] && continue
     mkdir -p "$WORK/$a" && cp -R "$HERE/seed/." "$WORK/$a/"
     (cd "$WORK/$a" && git init -q && git add -A && GIT_AUTHOR_DATE=2026-11-08T17:00:00Z GIT_COMMITTER_DATE=2026-11-08T17:00:00Z \
       git -c user.name=e13 -c user.email=e13@localhost commit -qm "Brief, UI references and concept art")
     git -C "$WORK/$a" config user.name "e13-$a"; git -C "$WORK/$a" config user.email "e13@localhost"
   done
+  if [ -n "$COMPARE" ] && [ ! -d "$WORK/compared" ]; then
+    git clone -q "$COMPARE" "$WORK/compared" || { echo "could not copy $COMPARE"; exit 1; }
+    echo "$COMPARE" > "$WORK/compared.from"
+  fi
+  [ -f "$WORK/.arms-run" ] || echo "$ARMS" > "$WORK/.arms-run"
+  [ -f "$WORK/.arms" ] || { if [ -d "$WORK/compared" ]; then echo "$ARMS compared"; else echo "$ARMS"; fi; } > "$WORK/.arms"
   [ -f "$WORK/deadline" ] || node -e "console.log(new Date(Date.now() + $HOURS * 3600000).toISOString())" > "$WORK/deadline"
 }
 
@@ -45,15 +57,17 @@ ended() { # 0 if the arm has finished for good
     *) node -e "const s=require('$WORK/$1.baseline.json'); process.exit(['stopped by itself','budget','deadline'].includes(s.end) ? 0 : 1)" 2>/dev/null ;;
   esac
 }
+all_ended() { for a in $ARMS; do ended "$a" || return 1; done; return 0; }
 
 launch() { # start any arm that is not running and not finished
-  local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/art/*.jpg | paste -sd, -)
-  if ! ended autopilot && ! alive "waypoint.mjs autopilot (start|resume)"; then
+  if has autopilot && ! ended autopilot && ! alive "waypoint.mjs autopilot (start|resume)"; then
+    local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/art/*.jpg | paste -sd, -)
     if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume); else sub=(start --brief-file BRIEF.md --references "$refs" --budget-usd "$BUDGET" --hours "$HOURS"); fi
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
     say "launched autopilot (${sub[0]})"
   fi
   for a in single loop; do
+    has $a || continue
     if ! ended $a && ! alive "baseline.mjs $WORK/$a "; then
       (nohup node "$HERE/baseline.mjs" "$WORK/$a" $a sonnet "$BUDGET" "$(cat "$WORK/deadline")" >> "$WORK/$a.out" 2>&1 < /dev/null &)
       say "launched $a"
@@ -64,10 +78,10 @@ launch() { # start any arm that is not running and not finished
 supervise() { # every 5 minutes: relaunch anything that died; at the end, stop the rest and serve the games blind
   while :; do
     now=$(date +%s); dl=$(node -e "console.log(Math.floor(Date.parse('$(cat "$WORK/deadline")')/1000))")
-    if [ "$now" -ge "$dl" ] || { ended autopilot && ended single && ended loop; }; then
-      say "finished ($( [ "$now" -ge "$dl" ] && echo deadline || echo 'all three ended')); stopping and serving blind"
+    if [ "$now" -ge "$dl" ] || all_ended; then
+      say "finished ($( [ "$now" -ge "$dl" ] && echo deadline || echo 'all arms ended')); stopping and serving blind"
       stop_arms; "$HERE/blind-serve.sh" start "$WORK" >> "$WORK/supervise.log" 2>&1
-      command -v osascript >/dev/null && osascript -e 'display notification "The three games are on ports 3101, 3102 and 3103" with title "Emberfall E13 finished"'
+      command -v osascript >/dev/null && osascript -e 'display notification "The games are ready to play blind from port 3101" with title "Emberfall E13 finished"'
       touch "$WORK/FINISHED"; return
     fi
     launch; sleep "${E13_TICK:-300}"
@@ -86,18 +100,19 @@ case "${1:-start}" in
     setup
     if alive "run-e13.sh _supervise"; then echo "already running; ./run-e13.sh status"; exit 0; fi
     # caffeinate keeps a Mac awake while this runs (plugged in; with the lid closed only in clamshell mode with a display)
-    if command -v caffeinate >/dev/null; then nohup caffeinate -ims "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null &
-    else nohup "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null & fi
-    sleep 5; echo "started. deadline $(cat "$WORK/deadline"); work in $WORK; log $WORK/supervise.log"; "$HERE/run-e13.sh" status ;;
+    if command -v caffeinate >/dev/null; then E13_WORK="$WORK" nohup caffeinate -ims "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null &
+    else E13_WORK="$WORK" nohup "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null & fi
+    sleep 5; echo "started. deadline $(cat "$WORK/deadline"); work in $WORK; log $WORK/supervise.log"; E13_WORK="$WORK" "$HERE/run-e13.sh" status ;;
   _supervise) supervise ;;
   status)
     echo "deadline: $(cat "$WORK/deadline" 2>/dev/null)   now: $(date -u +%FT%TZ)"
-    [ -f "$WORK/FINISHED" ] && echo "FINISHED: games on http://localhost:3101 3102 3103"
+    [ -f "$WORK/FINISHED" ] && echo "FINISHED: games are being served blind from http://localhost:3101"
     alive "run-e13.sh _supervise" && echo "supervisor: running" || echo "supervisor: not running (./run-e13.sh start)"
-    for a in autopilot single loop; do ended $a && s=ended || { [ $a = autopilot ] && p="waypoint.mjs autopilot" || p="baseline.mjs $WORK/$a "; alive "$p" && s=running || s=down; }; echo "arm $a: $s"; done
+    for a in $ARMS; do ended $a && s=ended || { [ $a = autopilot ] && p="waypoint.mjs autopilot" || p="baseline.mjs $WORK/$a "; alive "$p" && s=running || s=down; }; echo "arm $a: $s"; done
+    [ -d "$WORK/compared" ] && echo "compared with: $(cat "$WORK/compared.from")"
     tail -n 3 "$WORK/supervise.log" 2>/dev/null ;;
   stop) pkill -f "run-e13.sh _supervise"; stop_arms; echo stopped ;;
   serve) "$HERE/blind-serve.sh" start "$WORK" ;;
   reveal) "$HERE/blind-serve.sh" reveal "$WORK" ;;
-  *) sed -n 2,13p "$HERE/run-e13.sh" ;;
+  *) sed -n 2,16p "$HERE/run-e13.sh" ;;
 esac

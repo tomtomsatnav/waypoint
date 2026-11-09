@@ -40,7 +40,8 @@ const USAGE = `waypoint <command>
   status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
   report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
   autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
-                          [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m] [--yes]
+                          [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m]
+                          [--review-model sonnet] [--research-model sonnet] [--overhead-share 0.2] [--no-research] [--yes]
                           From a brief to a shipped project in the current repo: plan, work, review, repeat, pacing on plan
                           usage and waiting out limits. Without --yes it only prints what it would do.
   autopilot resume [--yes]  Carry on from .git/autopilot after a stop or a restart.
@@ -57,7 +58,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json'].includes(k)) { o[k] = true; continue; }
+    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json', 'no-research'].includes(k)) { o[k] = true; continue; }
     const v = argv[++i];
     if (v === undefined) throw new Error(`--${k} needs a value`);
     o[k] = v;
@@ -174,7 +175,8 @@ async function main() {
       references: o.references ? String(o.references).split(',').map((s) => s.trim()).filter(Boolean) : [],
       budgetUsd: num(o['budget-usd'], 'budget-usd'), deadlineHours: num(o.hours, 'hours'), strongModel: o['strong-model'],
       configDir: o['config-dir'], claude: o.claude, verify: o.verify, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'),
-      forceModel: o['force-model'] };
+      forceModel: o['force-model'], reviewModel: o['review-model'], researchModel: o['research-model'],
+      overheadShare: num(o['overhead-share'], 'overhead-share'), research: o['no-research'] ? false : undefined };
     if (sub === 'start' && (!opts.brief || !(opts.budgetUsd > 0))) throw new Error('autopilot start needs --brief-file and --budget-usd');
     process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: budget $${opts.budgetUsd ?? existing?.policy.budgetUsd}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
     if (!o.yes) { process.stderr.write('[autopilot] not started: pass --yes to run (spends money).\n'); return 0; }
