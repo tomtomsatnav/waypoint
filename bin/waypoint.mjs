@@ -41,7 +41,8 @@ const USAGE = `waypoint <command>
   report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
   autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
                           [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m]
-                          [--review-model sonnet] [--research-model sonnet] [--overhead-share 0.2] [--no-research] [--yes]
+                          [--review-model sonnet] [--research-model sonnet] [--overhead-share 0.2] [--no-research]
+                          [--max-workers 3] [--yes]
                           From a brief to a shipped project in the current repo: plan, work, review, repeat, pacing on plan
                           usage and waiting out limits. Without --yes it only prints what it would do.
   autopilot resume [--yes]  Carry on from .git/autopilot after a stop or a restart.
@@ -175,7 +176,7 @@ async function main() {
       references: o.references ? String(o.references).split(',').map((s) => s.trim()).filter(Boolean) : [],
       budgetUsd: num(o['budget-usd'], 'budget-usd'), deadlineHours: num(o.hours, 'hours'), strongModel: o['strong-model'],
       configDir: o['config-dir'], claude: o.claude, verify: o.verify, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'),
-      forceModel: o['force-model'], reviewModel: o['review-model'], researchModel: o['research-model'],
+      forceModel: o['force-model'], reviewModel: o['review-model'], researchModel: o['research-model'], maxWorkers: num(o['max-workers'], 'max-workers'),
       overheadShare: num(o['overhead-share'], 'overhead-share'), research: o['no-research'] ? false : undefined };
     if (sub === 'start' && (!opts.brief || !(opts.budgetUsd > 0))) throw new Error('autopilot start needs --brief-file and --budget-usd');
     process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: budget $${opts.budgetUsd ?? existing?.policy.budgetUsd}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
