@@ -3,6 +3,7 @@
 #   autopilot: waypoint autopilot (research, Fable plans, cheaper models build, Sonnet reviews), budget $60
 #   single:    one Claude Code session (Sonnet) with the brief, until it stops by itself
 #   loop:      Claude Code (Sonnet) told "continue" every time it stops
+#   researched: the autopilot's research step (EXPECTATIONS.md), then exactly the single arm told to read it
 # All arms share your Claude plan and pause for its usage limits, resuming after the reset.
 #
 #   ./run-e13.sh start    set up (first time) and start, or carry on after a reboot; safe to run again
@@ -12,7 +13,7 @@
 #   ./run-e13.sh reveal   which port was which (only after your blind feedback)
 #
 # Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52),
-# E13_BUDGET (60), E13_COMPARE (a finished arm's repo to include, unchanged, in the blind review; e.g. last run's winner).
+# E13_BUDGET (60), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 WORK=${E13_WORK:-$HOME/emberfall-e13}; HOURS=${E13_HOURS:-52}; BUDGET=${E13_BUDGET:-60}
@@ -42,12 +43,17 @@ setup() {
       git -c user.name=e13 -c user.email=e13@localhost commit -qm "Brief, UI references and concept art")
     git -C "$WORK/$a" config user.name "e13-$a"; git -C "$WORK/$a" config user.email "e13@localhost"
   done
-  if [ -n "$COMPARE" ] && [ ! -d "$WORK/compared" ]; then
-    git clone -q "$COMPARE" "$WORK/compared" || { echo "could not copy $COMPARE"; exit 1; }
-    echo "$COMPARE" > "$WORK/compared.from"
+  local extra=""
+  if [ -n "$COMPARE" ] && [ ! -f "$WORK/compared.from" ]; then
+    local i=0
+    for c in $COMPARE; do
+      i=$((i+1)); git clone -q "$c" "$WORK/compared$i" || { echo "could not copy $c"; exit 1; }
+      echo "compared$i $c" >> "$WORK/compared.from"
+    done
   fi
+  [ -f "$WORK/compared.from" ] && extra=$(awk '{print $1}' "$WORK/compared.from" | grep -v '^/' | paste -sd' ' -)
   [ -f "$WORK/.arms-run" ] || echo "$ARMS" > "$WORK/.arms-run"
-  [ -f "$WORK/.arms" ] || { if [ -d "$WORK/compared" ]; then echo "$ARMS compared"; else echo "$ARMS"; fi; } > "$WORK/.arms"
+  [ -f "$WORK/.arms" ] || echo "$ARMS $extra" > "$WORK/.arms"
   [ -f "$WORK/deadline" ] || node -e "console.log(new Date(Date.now() + $HOURS * 3600000).toISOString())" > "$WORK/deadline"
 }
 
@@ -66,7 +72,7 @@ launch() { # start any arm that is not running and not finished
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
     say "launched autopilot (${sub[0]})"
   fi
-  for a in single loop; do
+  for a in single loop researched; do
     has $a || continue
     if ! ended $a && ! alive "baseline.mjs $WORK/$a "; then
       (nohup node "$HERE/baseline.mjs" "$WORK/$a" $a sonnet "$BUDGET" "$(cat "$WORK/deadline")" >> "$WORK/$a.out" 2>&1 < /dev/null &)
@@ -109,7 +115,7 @@ case "${1:-start}" in
     [ -f "$WORK/FINISHED" ] && echo "FINISHED: games are being served blind from http://localhost:3101"
     alive "run-e13.sh _supervise" && echo "supervisor: running" || echo "supervisor: not running (./run-e13.sh start)"
     for a in $ARMS; do ended $a && s=ended || { [ $a = autopilot ] && p="waypoint.mjs autopilot" || p="baseline.mjs $WORK/$a "; alive "$p" && s=running || s=down; }; echo "arm $a: $s"; done
-    [ -d "$WORK/compared" ] && echo "compared with: $(cat "$WORK/compared.from")"
+    [ -f "$WORK/compared.from" ] && echo "compared with: $(paste -sd';' "$WORK/compared.from")"
     tail -n 3 "$WORK/supervise.log" 2>/dev/null ;;
   stop) pkill -f "run-e13.sh _supervise"; stop_arms; echo stopped ;;
   serve) "$HERE/blind-serve.sh" start "$WORK" ;;

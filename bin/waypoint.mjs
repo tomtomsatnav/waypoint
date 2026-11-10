@@ -42,7 +42,7 @@ const USAGE = `waypoint <command>
   autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
                           [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m]
                           [--review-model sonnet] [--research-model sonnet] [--overhead-share 0.2] [--no-research]
-                          [--max-workers 3] [--yes]
+                          [--max-workers 1] [--yes]
                           From a brief to a shipped project in the current repo: plan, work, review, repeat, pacing on plan
                           usage and waiting out limits. Without --yes it only prints what it would do.
   autopilot resume [--yes]  Carry on from .git/autopilot after a stop or a restart.

@@ -48,6 +48,21 @@ E13_WORK=~/emberfall-e13b E13_ARMS=autopilot E13_COMPARE=~/emberfall-e13/single 
 Use the same `E13_WORK=~/emberfall-e13b` in front of `status`, `stop` and `reveal`. At the end the two games are served on
 ports 3101 and 3102 in a random order.
 
+## E13c: is the research step alone the value? (run after E13b finishes)
+
+One plain Sonnet session, exactly as E13's winner, except that the autopilot's research step runs first (about $1-2:
+Sonnet with web search writes EXPECTATIONS.md) and the session's prompt gains one sentence telling it to treat that file as
+part of the brief. Judged blind against E13's winner and E13b's autopilot. Start it only once E13b has finished (they would
+share your plan's usage):
+
+```sh
+cd ~/waypoint && git pull
+E13_WORK=~/emberfall-e13c E13_ARMS=researched E13_COMPARE="$HOME/emberfall-e13/single $HOME/emberfall-e13b/autopilot" ~/waypoint/experiments/e13/run-e13.sh start
+```
+
+It should take about an hour. The three games are then served on ports 3101-3103 in a random order; give your verdict
+before `E13_WORK=~/emberfall-e13c ~/waypoint/experiments/e13/run-e13.sh reveal`.
+
 ## Afterwards
 
 Judging uses the hidden rubric in `.judge.b64` (a base64 tarball, kept opaque so the builders do not read it; do not open it

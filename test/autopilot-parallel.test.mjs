@@ -96,7 +96,7 @@ test('autopilot end to end: independent tasks run at the same time in worktrees,
     { id: 'm1-b', type: 'code-simple', after: [], goal: 'create b.txt', checks: [{ name: 'b', run: 'test -f b.txt' }] },
     { id: 'm1-c', type: 'code-simple', after: ['m1-a', 'm1-b'], goal: 'create c.txt', checks: [{ name: 'c', run: 'test -f c.txt' }] }] };
   Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_UTIL: '0.1' });
-  const st = await autopilot({ repo, brief: 'test brief', budgetUsd: 20, deadlineHours: 1, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+  const st = await autopilot({ repo, brief: 'test brief', budgetUsd: 20, deadlineHours: 1, maxWorkers: 3, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
   assert.equal(st.finished, 'shipped');
   for (const f of ['a.txt', 'b.txt', 'c.txt', 'EXPECTATIONS.md']) assert.ok(existsSync(join(repo, f)), `${f} is on main`);
   const calls = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
@@ -132,4 +132,22 @@ test('autopilot: an attempt killed by its time limit is charged its spending cap
     assert.ok(st.spentUsd >= 19, `spent ${st.spentUsd} includes the three caps`);
     assert.equal(st.milestones[0].tasks[0].status, 'stuck');
   } finally { delete process.env.FAKE_AP_HANG; delete process.env.FAKE_AP_PLAN; }
+});
+
+test('autopilot: without --max-workers, independent tasks still run one at a time in the main repo', async () => {
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [
+    { id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] },
+    { id: 'm1-b', type: 'code-simple', after: [], goal: 'create b.txt', checks: [{ name: 'b', run: 'test -f b.txt' }] }] };
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan) });
+  try {
+    const st = await autopilot({ repo, brief: 'b', budgetUsd: 20, deadlineHours: 1, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+    assert.equal(st.finished, 'shipped');
+    const work = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c.role === 'work').sort((p, q) => p.start - q.start);
+    assert.equal(work.length, 2);
+    assert.ok(work.every((c) => !c.cwd.includes('/autopilot/wt/')), 'no worktrees');
+    assert.ok(work[1].start >= work[0].end, 'one after the other');
+  } finally { delete process.env.FAKE_AP_PLAN; }
 });
