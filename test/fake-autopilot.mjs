@@ -41,7 +41,7 @@ if (/reviewer/.test(p)) { writeFileSync(m(/Then write (\S+) as JSON/), JSON.stri
 const file = m(/create (\S+)/);
 const dir = mkdtempSync(join(tmpdir(), 'fake-ap-'));
 const script = join(dir, 'script.json');
-writeFileSync(script, JSON.stringify({ steps: [{ sleep: 400 }, ...(file ? [{ shell: `echo ${file} > ${file} && git add -A && git commit -qm ${file}` }] : []), { stop: true }] }));
+writeFileSync(script, JSON.stringify({ steps: [{ sleep: process.env.FAKE_AP_HANG ? 60000 : 400 }, ...(file ? [{ shell: `echo ${file} > ${file} && git add -A && git commit -qm ${file}` }] : []), { stop: true }] }));
 usage();
 const r = spawnSync(process.execPath, [join(dirname(fileURLToPath(import.meta.url)), 'fake-claude.mjs'), ...argv], { encoding: 'utf8', env: { ...process.env, FAKE_CLAUDE_SCRIPT: script } });
 process.stdout.write(r.stdout);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec } from '../lib/autopilot.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
 
@@ -111,4 +111,25 @@ test('autopilot end to end: independent tasks run at the same time in worktrees,
   assert.equal(sh(repo, 'git worktree list | wc -l'), '1', 'worktrees are cleaned up');
   assert.equal(sh(repo, 'git status --porcelain'), '');
   delete process.env.FAKE_AP_PLAN;
+});
+
+test('time limits: routine tasks get 45 minutes, hard ones 90; an explicit policy wins', () => {
+  assert.equal(taskWallSec({ policy: {} }, 'code-moderate'), 2700);
+  assert.equal(taskWallSec({ policy: {} }, 'code-complex'), 5400);
+  assert.equal(taskWallSec({ policy: { taskWallSec: 60 } }, 'code-complex'), 60);
+});
+
+test('autopilot: an attempt killed by its time limit is charged its spending cap, never $0', async () => {
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 'hang', tasks: [{ id: 'm1-h', type: 'code-simple', after: [], goal: 'create h.txt', checks: [{ name: 'h', run: 'test -f h.txt' }] }] };
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_HANG: '1' });
+  try {
+    const st = await autopilot({ repo, brief: 'b', budgetUsd: 100, deadlineHours: 1, taskWallSec: 2, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+    const work = readFileSync(join(repo, '.git', 'autopilot', 'ledger.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter((e) => e.kind === 'work');
+    assert.deepEqual(work.map((e) => [e.model, e.costUsd, e.costEstimated]), [['haiku', 3, true], ['sonnet', 6, true], ['opus', 10, true]]);
+    assert.ok(st.spentUsd >= 19, `spent ${st.spentUsd} includes the three caps`);
+    assert.equal(st.milestones[0].tasks[0].status, 'stuck');
+  } finally { delete process.env.FAKE_AP_HANG; delete process.env.FAKE_AP_PLAN; }
 });
