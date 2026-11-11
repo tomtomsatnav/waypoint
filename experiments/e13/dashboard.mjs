@@ -11,6 +11,9 @@ import { spawnSync } from 'node:child_process';
 const args = process.argv.slice(2);
 const pi = args.indexOf('--port');
 const PORT = pi >= 0 ? Number(args[pi + 1]) : 3099;
+// --lan: also serve on this machine's Wi-Fi address, so a phone on the same network can open it (read-only, no secrets;
+// it does show logs and commit messages to anyone on that network).
+const LAN = args.includes('--lan');
 const WORK = resolve((args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--port') || join(homedir(), 'emberfall-e13')).replace(/^~/, homedir()));
 
 const read = (p) => { try { return readFileSync(p, 'utf8'); } catch { return null; } };
@@ -176,4 +179,9 @@ tick();setInterval(tick,30000);
 http.createServer((req, res) => {
   if (req.url === '/api') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(snapshot())); }
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(PAGE);
-}).listen(PORT, '127.0.0.1', () => process.stdout.write(`dashboard for ${WORK}: http://localhost:${PORT}\n`));
+}).listen(PORT, LAN ? '0.0.0.0' : '127.0.0.1', async () => {
+  process.stdout.write(`dashboard for ${WORK}: http://localhost:${PORT}\n`);
+  if (LAN) { const { networkInterfaces } = await import('node:os');
+    for (const list of Object.values(networkInterfaces())) for (const n of list || []) if (n.family === 'IPv4' && !n.internal)
+      process.stdout.write(`  on your phone (same Wi-Fi): http://${n.address}:${PORT}\n`); }
+});
