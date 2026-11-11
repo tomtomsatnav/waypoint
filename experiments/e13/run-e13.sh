@@ -13,10 +13,11 @@
 #   ./run-e13.sh reveal   which port was which (only after your blind feedback)
 #
 # Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52),
-# E13_BUDGET (60), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
+# E13_SEED (the starting repo; default ./seed), E13_BUDGET (60), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 WORK=${E13_WORK:-$HOME/emberfall-e13}; HOURS=${E13_HOURS:-52}; BUDGET=${E13_BUDGET:-60}
+SEED=${E13_SEED:-$HERE/seed}   # the starting repo: brief and references (E14 uses ../e14/seed)
 ARMS=${E13_ARMS:-autopilot single loop}; COMPARE=${E13_COMPARE:-}
 export WAYPOINT_SETTING_SOURCES=project,local   # keep your own Claude Code settings, hooks and CLAUDE.md out of every arm
 export NODE_PATH="$WORK/tools/node_modules"      # so every arm can require('playwright') to test in a real browser
@@ -38,7 +39,7 @@ setup() {
   fi
   for a in $ARMS; do
     [ -d "$WORK/$a/.git" ] && continue
-    mkdir -p "$WORK/$a" && cp -R "$HERE/seed/." "$WORK/$a/"
+    mkdir -p "$WORK/$a" && cp -R "$SEED/." "$WORK/$a/"
     (cd "$WORK/$a" && git init -q && git add -A && GIT_AUTHOR_DATE=2026-11-08T17:00:00Z GIT_COMMITTER_DATE=2026-11-08T17:00:00Z \
       git -c user.name=e13 -c user.email=e13@localhost commit -qm "Brief, UI references and concept art")
     git -C "$WORK/$a" config user.name "e13-$a"; git -C "$WORK/$a" config user.email "e13@localhost"
