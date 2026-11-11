@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY } from '../lib/autopilot.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
 
@@ -150,4 +150,33 @@ test('autopilot: without --max-workers, independent tasks still run one at a tim
     assert.ok(work.every((c) => !c.cwd.includes('/autopilot/wt/')), 'no worktrees');
     assert.ok(work[1].start >= work[0].end, 'one after the other');
   } finally { delete process.env.FAKE_AP_PLAN; }
+});
+
+test('guard: only the planner\'s acceptance tests are frozen; older runs keep the old guard', () => {
+  const old = acceptanceGuard({ policy: { verify: STANDIN_VERIFY } });
+  assert.deepEqual(old, { verify: STANDIN_VERIFY, guardText: true }, 'a run without protectedTests keeps the old behaviour');
+  const none = acceptanceGuard({ policy: { verify: STANDIN_VERIFY }, protectedTests: [] });
+  assert.equal(none.verify, null);
+  assert.match(none.guardText, /yours to fix/);
+  const g = acceptanceGuard({ policy: { verify: STANDIN_VERIFY }, protectedTests: ['tests/a.test.mjs', "tests/it's.test.mjs"] });
+  assert.equal(g.verify, `git diff --quiet --diff-filter=DM {base} -- 'tests/a.test.mjs' 'tests/it'\\''s.test.mjs'`);
+  assert.match(g.guardText, /tests\/a\.test\.mjs/);
+  assert.match(g.guardText, /including ones earlier workers wrote, is yours to fix/);
+  assert.equal(acceptanceGuard({ policy: { verify: 'aos-orch verify' }, protectedTests: ['x'] }).verify, 'aos-orch verify', 'an explicit --verify is kept');
+});
+
+test('autopilot: the tests the planner commits are the frozen ones, and workers are told so', async () => {
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_ACCEPT: '1' });
+  try {
+    const st = await autopilot({ repo, brief: 'b', budgetUsd: 20, deadlineHours: 1, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+    assert.equal(st.finished, 'shipped');
+    assert.deepEqual(st.protectedTests, ['tests/accept.test.mjs']);
+    const q = JSON.parse(readFileSync(join(repo, '.git', 'autopilot', 'runs', 'queue-m1-a-0.json'), 'utf8'));
+    assert.match(q.verify, /'tests\/accept\.test\.mjs'$/);
+    assert.match(q.guardText, /acceptance tests the planner wrote \(tests\/accept\.test\.mjs\)/);
+  } finally { delete process.env.FAKE_AP_ACCEPT; delete process.env.FAKE_AP_PLAN; }
 });

@@ -7,7 +7,7 @@
 //                     and the finish line run for real
 //   reviewer/confirm  write a ship verdict
 // FAKE_AP_LOG: one JSON line per call: { role, model, effort, cwd, start, end }.
-import { appendFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { appendFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -33,6 +33,7 @@ if (/^You are the researcher for an autonomous build/.test(p)) { writeFileSync(m
 if (/^You are the planner/.test(p)) {
   writeFileSync(m(/Write the milestone as JSON to (\S+):/), process.env.FAKE_AP_PLAN);
   writeFileSync(join(dirname(m(/Write the milestone as JSON to (\S+):/)), 'ship.json'), JSON.stringify({ checks: [{ name: 'ok', run: 'true' }] }));
+  if (process.env.FAKE_AP_ACCEPT) { mkdirSync('tests', { recursive: true }); writeFileSync('tests/accept.test.mjs', '// acceptance\n'); }
   done('plan'); usage(); result(); process.exit(0);
 }
 if (/reviewer/.test(p)) { writeFileSync(m(/Then write (\S+) as JSON/), JSON.stringify({ verdict: 'ship', assessment: 'fine' })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
