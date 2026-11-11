@@ -38,12 +38,13 @@ function autopilotArm() {
   a.milestones = (st.milestones || []).map((m) => ({ n: m.n, title: m.title, status: m.status, verdict: m.review?.verdict ?? null,
     tasks: m.tasks.map((t) => ({ id: t.id, type: t.type, status: t.status, tries: t.history.map((h) => `${h.model}:${h.outcome}`) })) }));
   // The current attempt: the last "work ..." line in the log, if nothing has been logged since.
-  const lastWork = [...log].reverse().find((l) => / work | workers \[/.test(l));
-  const lastLine = log.at(-1) || '';
-  if (running && lastWork && lastWork === lastLine) {
+  // What it is doing now: the last log line (planning, researching, a task, a review), and since when. Lines are UTC.
+  const lastLine = [...log].reverse().find((l) => /^\[autopilot \d\d:\d\d:\d\d\]/.test(l)) || '';
+  if (running && lastLine) {
     const m = lastLine.match(/^\[autopilot (\d\d):(\d\d):(\d\d)\]/);
-    if (m) { const d = new Date(); d.setUTCHours(+m[1], +m[2], +m[3], 0); if (d > Date.now() + 60000) d.setUTCDate(d.getUTCDate() - 1);
-      a.current = { line: lastLine.replace(/^\[autopilot [^\]]+\]\s*/, ''), since: d.getTime() }; }
+    const d = new Date(); d.setUTCHours(+m[1], +m[2], +m[3], 0); if (d > Date.now() + 60000) d.setUTCDate(d.getUTCDate() - 1);
+    const line = lastLine.replace(/^\[autopilot [^\]]+\]\s*/, '');
+    a.current = { line, since: d.getTime(), work: /^(work |\d+ workers )/.test(line) };
   }
   const pausing = [...log].reverse().find((l) => /pausing until/.test(l));
   if (pausing && pausing === lastLine) a.pausedUntil = (pausing.match(/pausing until (\S+?):/) || [])[1] ?? null;
@@ -85,7 +86,7 @@ function snapshot() {
   if (s.finished) w.push(['good', 'Finished: the games are being served blind from http://localhost:3101. Give your verdict before revealing.']);
   for (const a of s.arms) {
     if (a.state === 'down') w.push(['bad', `${a.name} is down (not running, not finished). The supervisor relaunches it within 5 minutes; if it stays down, look at its log.`]);
-    if (a.current) { const min = (Date.now() - a.current.since) / 60000;
+    if (a.current?.work) { const min = (Date.now() - a.current.since) / 60000;
       if (min > 80) w.push(['warn', `${a.name}: the current attempt has run ${Math.round(min)} min (${a.current.line}). Routine tasks get 45 min, hard ones 90; past that it is probably waiting on something that hangs.`]); }
     const caps = a.log.filter((l) => /cap:wall-clock/.test(l));
     if (caps.length >= 2) w.push(['warn', `${a.name}: ${caps.length} attempts in the recent log ran out of time (cap:wall-clock): a task may be stuck on a hanging test.`]);
