@@ -100,7 +100,15 @@ test('autopilot end to end: independent tasks run at the same time in worktrees,
   assert.equal(st.finished, 'shipped');
   for (const f of ['a.txt', 'b.txt', 'c.txt', 'EXPECTATIONS.md']) assert.ok(existsSync(join(repo, f)), `${f} is on main`);
   const calls = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
-  assert.deepEqual(calls.map((c) => c.role).filter((r) => r !== 'work'), ['research', 'plan', 'review', 'confirm']);
+  assert.deepEqual(calls.map((c) => c.role).filter((r) => r !== 'work'), ['research', 'plan', 'tester', 'review'],
+    'the strong model researches, plans and reviews (so no separate ship confirmation); a cheap tester plays the build first');
+  const by = (r) => calls.find((c) => c.role === r);
+  assert.equal(by('research').model, 'claude-fable-5-1');
+  assert.equal(by('plan').model, 'claude-fable-5-1');
+  assert.equal(by('review').model, 'claude-fable-5-1');
+  assert.equal(by('tester').model, 'haiku');
+  assert.match(readFileSync(log + '.review-prompts', 'utf8'), /<tester-report>[\s\S]*works: everything tried/, 'the review is given the tester\'s report');
+  assert.ok(st.overheadUsd < st.spentUsd, 'the tester counts as work, not overhead');
   const work = calls.filter((c) => c.role === 'work');
   assert.equal(work.length, 3);
   const [x, y, z] = work.sort((p, q) => p.start - q.start);
@@ -128,8 +136,9 @@ test('autopilot: an attempt killed by its time limit is charged its spending cap
   try {
     const st = await autopilot({ repo, brief: 'b', budgetUsd: 100, deadlineHours: 1, taskWallSec: 2, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
     const work = readFileSync(join(repo, '.git', 'autopilot', 'ledger.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter((e) => e.kind === 'work');
-    assert.deepEqual(work.map((e) => [e.model, e.costUsd, e.costEstimated]), [['haiku', 3, true], ['sonnet', 6, true], ['opus', 10, true]]);
-    assert.ok(st.spentUsd >= 19, `spent ${st.spentUsd} includes the three caps`);
+    assert.deepEqual(work.map((e) => [e.model, e.costUsd, e.costEstimated]), [['haiku', 3, true], ['sonnet', 6, true]],
+      'builders stay cheap: after Haiku and Sonnet the task goes back to the planner, not up to Opus');
+    assert.ok(st.spentUsd >= 9, `spent ${st.spentUsd} includes the two caps`);
     assert.equal(st.milestones[0].tasks[0].status, 'stuck');
   } finally { delete process.env.FAKE_AP_HANG; delete process.env.FAKE_AP_PLAN; }
 });

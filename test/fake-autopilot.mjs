@@ -36,7 +36,8 @@ if (/^You are the planner/.test(p)) {
   if (process.env.FAKE_AP_ACCEPT) { mkdirSync('tests', { recursive: true }); writeFileSync('tests/accept.test.mjs', '// acceptance\n'); }
   done('plan'); usage(); result(); process.exit(0);
 }
-if (/reviewer/.test(p)) { writeFileSync(m(/Then write (\S+) as JSON/), JSON.stringify({ verdict: 'ship', assessment: 'fine' })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
+if (/^You are the tester/.test(p)) { writeFileSync(m(/3\. Write (\S+) in Markdown/), '# Tester report\n- works: everything tried (shot: a.png)\n'); done('tester'); usage(); result(); process.exit(0); }
+if (/reviewer/.test(p)) { if (process.env.FAKE_AP_LOG) appendFileSync(process.env.FAKE_AP_LOG + '.review-prompts', p + '\n----\n'); writeFileSync(m(/Then write (\S+) as JSON/), JSON.stringify({ verdict: 'ship', assessment: 'fine' })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
 
 // FAKE_AP_LIMIT_ONCE=<marker file>: the first worker call ends as the CLI does when the 5-hour limit is hit.
 if (process.env.FAKE_AP_LIMIT_ONCE && !existsSync(process.env.FAKE_AP_LIMIT_ONCE)) {

@@ -55,14 +55,16 @@ test('autopilot: the planner is told to write tests and checks, not the implemen
   assert.match(STANDIN_VERIFY, /--diff-filter=DM \{base\}/);
 });
 
-test('autopilot: research, planning and reviews are held to the overhead share; past it, reviews go light', () => {
-  const st = { policy: { budgetUsd: 60 }, overheadUsd: 0 };
-  assert.equal(overheadLeft(st), 12, '20% of $60 by default');
-  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 3, light: false }, 'routine reviews run on Sonnet, capped at $3');
-  st.overheadUsd = 10.5;
-  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 1.5, light: false }, 'a review never spends more than is left');
-  st.overheadUsd = 11.6;
-  assert.deepEqual(reviewSpec(st), { model: 'sonnet', budget: 0.5, light: true }, 'below $1 left: a light review so the loop can still plan');
+test('autopilot: the strong model reviews within the overhead share; past it, or when usage is tight, on a small budget', () => {
+  const st = { policy: { budgetUsd: 60, strongModel: 'claude-fable-5-1' }, overheadUsd: 0 };
+  assert.equal(overheadLeft(st), 18, '30% of $60 by default');
+  assert.deepEqual(reviewSpec(st), { model: 'claude-fable-5-1', budget: 3, light: false }, 'the strong model decides, capped at $3');
+  st.overheadUsd = 16.5;
+  assert.deepEqual(reviewSpec(st), { model: 'claude-fable-5-1', budget: 1.5, light: false }, 'a review never spends more than is left');
+  st.overheadUsd = 17.6;
+  assert.deepEqual(reviewSpec(st), { model: 'claude-fable-5-1', budget: 1, light: true }, 'below $1 left: a small review so the loop can still plan');
+  assert.deepEqual(reviewSpec({ ...st, overheadUsd: 0 }, 'tight'), { model: 'claude-fable-5-1', budget: 1, light: true }, 'tight usage: small');
+  assert.equal(reviewSpec({ policy: { budgetUsd: 60, strongModel: 'x', reviewModel: 'sonnet' }, overheadUsd: 0 }).model, 'sonnet', 'an explicit review model still wins');
   assert.equal(overheadLeft({ policy: {}, overheadUsd: 99 }), Infinity, 'no budget, no cap');
   assert.equal(overheadLeft({ policy: { budgetUsd: 100, overheadShare: 0.3 }, overheadUsd: 0 }), 30);
 });
