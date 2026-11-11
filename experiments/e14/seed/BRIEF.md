@@ -1,6 +1,6 @@
 # Gloamreach: brief
 
-Build **Gloamreach**, a dark, punishing third-person action RPG in the souls-like tradition, played in a desktop browser, where
+Build **Gloamreach**, a dark, punishing action RPG in the souls-like tradition, seen from a locked overhead camera and played in a desktop browser, where
 **everything on screen is drawn with small text characters**: the ground, grass, trees and their leaves, water, stone walls,
 buildings, fog, fire, the player, the enemies, the bosses and the interface. It must be obvious at a glance that the world is
 made of characters, and it must also look genuinely beautiful: atmospheric, detailed, well lit and alive.
@@ -27,6 +27,15 @@ libraries as needed.
   character-grid style and the HUD (health, stamina, flask charges, currency, boss bar). The game should look better than
   the mock-ups, and moving.
 
+## The camera
+
+- A locked camera, as in top-down action games and MOBAs: it looks down on the player from a fixed, elevated angle (about
+  55 degrees) and follows them smoothly. It never rotates and the player cannot move it; the mouse does not turn it.
+- The view always shows enough around the player to read attacks coming, including from behind; it may pull back a little
+  in boss arenas and large spaces.
+- Anything between the camera and the player (walls, roofs, tree canopies) fades or turns see-through, so the player is
+  never hidden; leaving a building's interior shows its roof again.
+
 ## A world that moves
 
 - **Wind**: a wind that changes in strength and direction over time and by place. Grass bends and ripples in waves as gusts
@@ -42,11 +51,12 @@ libraries as needed.
 ## Play
 
 - **Controls**, the genre's standard layout, rebindable, with a gamepad supported throughout (Gamepad API):
-  - Keyboard and mouse: WASD move, mouse turns the camera, Space tapped rolls / dodges and held sprints, left mouse light
+  - Keyboard and mouse: WASD move (relative to the screen: W is up), the mouse cursor aims (the character turns to face it when
+    attacking, blocking, casting and shooting), Space tapped rolls / dodges in the movement direction and held sprints, left mouse light
     attack, Shift + left mouse heavy attack, right mouse block (hold), Ctrl parry (with a shield or parrying tool), Q lock on
-    to a target (mouse wheel or Q again switches target), E interact (doors, levers, items, checkpoints), R use the equipped
+    to a target, which then sets the facing instead of the cursor (mouse wheel or Q again switches target), E interact (doors, levers, items, checkpoints), R use the equipped
     item (the healing flask by default), 1-4 switch right weapon / left hand / item / spell, F two-hand the weapon, Esc menu.
-  - Gamepad: left stick move, right stick camera, right shoulder light attack, right trigger heavy, left shoulder block,
+  - Gamepad: left stick move, right stick aims (facing), right shoulder light attack, right trigger heavy, left shoulder block,
     left trigger parry, face buttons roll/sprint, interact, use item and two-hand, right stick click lock-on, d-pad to switch.
 - **Combat**, deliberate and punishing, as the genre is known for: a stamina bar that every attack, roll, block and sprint
   drains; rolls with invincibility frames and a recovery; poise and stagger; backstabs and ripostes after a parry; weight
@@ -84,7 +94,7 @@ libraries as needed.
 
 - Title screen (new game, continue, settings, credits), character creation with a character-drawn preview, pause menu,
   inventory and equipment screens, level-up screen, map of found checkpoints, item descriptions.
-- Settings: graphics (character density / resolution, effects quality, view distance), camera sensitivity and inversion,
+- Settings: graphics (character density / resolution, effects quality, view distance), camera zoom level,
   key bindings and gamepad bindings, audio volumes (master, music, effects), reduced camera shake. Settings persist.
 - Saving: the game saves continuously (position, inventory, flags, opened shortcuts, bosses beaten) and continues after a
   reload. Several save slots.
