@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS } from '../lib/autopilot.mjs';
+import { pick } from '../lib/routing.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
 
@@ -188,4 +189,12 @@ test('autopilot: the tests the planner commits are the frozen ones, and workers 
     assert.match(q.verify, /'tests\/accept\.test\.mjs'$/);
     assert.match(q.guardText, /acceptance tests the planner wrote \(tests\/accept\.test\.mjs\)/);
   } finally { delete process.env.FAKE_AP_ACCEPT; delete process.env.FAKE_AP_PLAN; }
+});
+
+test('builders: Haiku codes and Sonnet does UI, each with exactly one step up', () => {
+  for (const t of ['code-simple', 'code-moderate', 'code-complex', 'test-writing', 'docs'])
+    assert.deepEqual([0, 1].map((a) => pick(t, a, {}, CHEAP_LADDERS)), ['haiku', 'sonnet'], t);
+  for (const t of ['ui-design', 'visual-polish', 'architecture'])
+    assert.deepEqual([0, 1].map((a) => pick(t, a, {}, CHEAP_LADDERS)), ['sonnet', 'opus'], t);
+  assert.ok(Object.values(CHEAP_LADDERS).every((l) => l.length === 2), 'one step up, then back to the planner');
 });
