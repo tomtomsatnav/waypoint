@@ -11,6 +11,7 @@ import { initState, insideWorkTree, loadQueue, loadState, saveState, stateDir, s
 import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 import { doctor } from '../lib/doctor.mjs';
+import { build } from '../lib/build.mjs';
 import { autopilot, loadAp, statusText } from '../lib/autopilot.mjs';
 import { formatReport, readReport } from '../lib/report.mjs';
 
@@ -39,6 +40,10 @@ const USAGE = `waypoint <command>
   init --queue <file>     Set up state for an interactive session and print the hook settings to use.
   status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
   report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
+  build --brief-file <f> [--model sonnet] [--budget-usd 30] [--no-research] [--yes]
+                          The default way to build from a brief (it won E13c): a short research pass writes EXPECTATIONS.md
+                          (what users expect that the brief does not say), then one plain session builds it, waiting out
+                          usage limits and resuming after them or a restart. Run it again to carry on.
   autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
                           [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m]
                           [--review-model sonnet] [--research-model sonnet] [--overhead-share 0.2] [--no-research]
@@ -163,6 +168,13 @@ async function main() {
     if (!o._[0]) throw new Error('report needs a report.json path');
     process.stdout.write(formatReport(readReport(o._[0])));
     return 0;
+  }
+
+  if (cmd === 'build') {
+    if (!o['brief-file']) throw new Error('build needs --brief-file');
+    if (!o.yes) { process.stderr.write('[build] not started: pass --yes to run (spends usage).\n'); return 0; }
+    const st = await build({ repo: process.cwd(), briefFile: o['brief-file'], model: o.model, budgetUsd: num(o['budget-usd'], 'budget-usd'), research: o['no-research'] ? false : true });
+    return st.end === 'stopped by itself' ? 0 : 1;
   }
 
   if (cmd === 'autopilot') {

@@ -1,5 +1,27 @@
 # waypoint
 
+## Start here: `waypoint build`
+
+To build something from a brief, run this in a git repo that holds the brief:
+
+```sh
+node <waypoint>/bin/waypoint.mjs build --brief-file BRIEF.md --yes
+```
+
+A short research pass writes `EXPECTATIONS.md`: what users of this kind of product take for granted that the brief does not
+say (for a game: camera, controls, feel), each with a check. Then one plain Claude Code session (Sonnet) builds the brief with
+that file as part of it and runs until it stops by itself. It waits out plan usage limits and resumes the same session after
+them; run the command again after a restart and it carries on. Options: `--model`, `--budget-usd` (default 30),
+`--no-research`.
+
+Why this is the default: on the Emberfall MMORPG brief, judged by the owner, it beat both a bare session and the full
+autopilot below ($6.95 and 80 minutes, against $36 and 49 hours for the autopilot). The one change that consistently helped
+was writing down what the brief leaves unsaid; the rest of the machinery added cost, not quality, on a project that fits in
+one long session ([experiments/results/2026-11-11.md](experiments/results/2026-11-11.md)). The autopilot remains for work too
+big for one session.
+
+## What else is here
+
 Keeps a long-running Claude Code agent on course and moving, using what Claude Code already has (hooks, compaction, resume)
 rather than a framework beside it.
 

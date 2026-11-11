@@ -7,7 +7,7 @@
 //                     and the finish line run for real
 //   reviewer/confirm  write a ship verdict
 // FAKE_AP_LOG: one JSON line per call: { role, model, effort, cwd, start, end }.
-import { appendFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
+import { appendFileSync, writeFileSync, mkdtempSync, mkdirSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -22,7 +22,7 @@ const usage = () => out({ type: 'rate_limit_event', rate_limit_info: { status: '
   five_hour: { utilization: Number(process.env.FAKE_AP_UTIL ?? 0.1), resetsAt: Date.now() / 1000 + 4 * 3600, status: 'allowed' },
   seven_day: { utilization: 0.1, resetsAt: Date.now() / 1000 + 6 * 86400, status: 'allowed' } } } });
 const done = (role) => {
-  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, cwd: process.cwd(), start, end: Date.now() }) + '\n');
+  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, resume: flag('--resume') ?? null, prompt: p.slice(0, 300), cwd: process.cwd(), start, end: Date.now() }) + '\n');
 };
 const result = () => out({ type: 'result', subtype: 'success', total_cost_usd: 0.05, num_turns: 1, result: 'ok' });
 const m = (re) => (p.match(re) || [])[1];
@@ -38,6 +38,11 @@ if (/^You are the planner/.test(p)) {
 }
 if (/reviewer/.test(p)) { writeFileSync(m(/Then write (\S+) as JSON/), JSON.stringify({ verdict: 'ship', assessment: 'fine' })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
 
+// FAKE_AP_LIMIT_ONCE=<marker file>: the first worker call ends as the CLI does when the 5-hour limit is hit.
+if (process.env.FAKE_AP_LIMIT_ONCE && !existsSync(process.env.FAKE_AP_LIMIT_ONCE)) {
+  writeFileSync(process.env.FAKE_AP_LIMIT_ONCE, '1'); usage(); done('work');
+  out({ type: 'result', subtype: 'success', is_error: true, terminal_reason: 'api_error', total_cost_usd: 0.1, result: "You've hit your 5-hour limit" }); process.exit(1);
+}
 // A worker: hand over to fake-claude.mjs with a script that does the task, so hooks and the finish line are real.
 const file = m(/create (\S+)/);
 const dir = mkdtempSync(join(tmpdir(), 'fake-ap-'));
