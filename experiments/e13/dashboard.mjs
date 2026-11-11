@@ -91,7 +91,7 @@ function sessionPrompts(mode) {
 function autopilotPrompts(work) {
   const refs = (() => { try { return spawnSync('bash', ['-c', 'ls references/*.png references/art/*.jpg 2>/dev/null | wc -l'], { cwd: work, encoding: 'utf8' }).stdout.trim(); } catch { return '?'; } })();
   return [{ label: 'Started as', text: `waypoint autopilot start --brief-file BRIEF.md --references (${refs} images) --budget-usd ${json(join(work, '.git', 'autopilot', 'state.json'))?.policy?.budgetUsd ?? '?'}` },
-    { label: 'Then', text: 'Sonnet researches what users expect (EXPECTATIONS.md); Fable plans from the brief, the images and that file (SPEC.md, FEATURES.json, milestones with checks); cheaper models build one checked task at a time; Sonnet reviews each milestone and Fable confirms a ship.' }];
+    { label: 'Then', text: 'Fable researches what users expect (EXPECTATIONS.md) and how the hardest parts are best built (APPROACH.md), then plans from the brief, the images and those files (SPEC.md, FEATURES.json, milestones with checks). Haiku codes and Sonnet does UI, one checked task at a time, each with one step up (Haiku to Sonnet, Sonnet to Opus). After each milestone a Haiku tester plays the build and reports with screenshots, and Fable decides what comes next.' }];
 }
 
 function snapshot() {

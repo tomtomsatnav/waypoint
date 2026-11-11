@@ -29,6 +29,7 @@ const m = (re) => (p.match(re) || [])[1];
 
 if (/^Reply with the single word ok/.test(p)) { usage(); result(); process.exit(0); }
 if (/^You are the researcher for a project/.test(p)) { writeFileSync('EXPECTATIONS.md', '- camera orbits. Check: drag\n'); done('research'); usage(); result(); process.exit(0); }
+if (/^You are the technical researcher/.test(p)) { writeFileSync('APPROACH.md', '# Approach\n- Hard problems: rendering a dense character grid fast\n'); done('research-approach'); usage(); result(); process.exit(0); }
 if (/^You are the researcher for an autonomous build/.test(p)) { writeFileSync(m(/notes to (\S+):/), 'notes\n'); done('research-stuck'); usage(); result(); process.exit(0); }
 if (/^You are the planner/.test(p)) {
   writeFileSync(m(/Write the milestone as JSON to (\S+):/), process.env.FAKE_AP_PLAN);

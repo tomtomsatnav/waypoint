@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decide, parseUsage } from '../lib/usage.mjs';
 import { pick, record, rate } from '../lib/routing.mjs';
-import { planPrompt, reviewPrompt, researchPrompt, stuckResearchPrompt, overheadLeft, reviewSpec, STANDIN_VERIFY } from '../lib/autopilot.mjs';
+import { planPrompt, reviewPrompt, researchPrompt, approachPrompt, stuckResearchPrompt, overheadLeft, reviewSpec, STANDIN_VERIFY } from '../lib/autopilot.mjs';
 
 const H = 3600000, NOW = Date.UTC(2026, 10, 8, 12);
 const usage = (u5, u7) => parseUsage({ status: 'allowed', unifiedWindows: { five_hour: { utilization: u5, resetsAt: (NOW + 2 * H) / 1000, status: 'allowed' }, seven_day: { utilization: u7, resetsAt: (NOW + 60 * H) / 1000, status: 'allowed' } } }, NOW);
@@ -100,4 +100,14 @@ test('autopilot: stuck research gets the task, its failing checks and where to w
   assert.match(p, /expected 1 got 0/);
   assert.match(p, /\/r\/m2-combat\.md/);
   assert.match(p, /do not change it/);
+});
+
+test('autopilot: the technical research looks for hard problems, tools, reference projects and practices, as advice', () => {
+  const a = approachPrompt({ brief: 'a souls-like drawn in characters', expectations: true });
+  for (const re of [/souls-like drawn in characters/, /WebSearch/, /APPROACH\.md/, /Tech choices/, /Reference projects/, /licence/, /Practices/, /advice for the planner, not requirements/, /EXPECTATIONS\.md/])
+    assert.match(a, re);
+  const p = planPrompt({ brief: 'b', approach: true }, '/x/m.json');
+  assert.match(p, /APPROACH\.md/);
+  assert.match(p, /advice, not requirements/);
+  assert.doesNotMatch(planPrompt({ brief: 'b' }, '/x/m.json'), /APPROACH\.md/, 'only when the research wrote one');
 });

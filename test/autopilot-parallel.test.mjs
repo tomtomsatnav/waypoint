@@ -101,10 +101,13 @@ test('autopilot end to end: independent tasks run at the same time in worktrees,
   assert.equal(st.finished, 'shipped');
   for (const f of ['a.txt', 'b.txt', 'c.txt', 'EXPECTATIONS.md']) assert.ok(existsSync(join(repo, f)), `${f} is on main`);
   const calls = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
-  assert.deepEqual(calls.map((c) => c.role).filter((r) => r !== 'work'), ['research', 'plan', 'tester', 'review'],
+  assert.deepEqual(calls.map((c) => c.role).filter((r) => r !== 'work'), ['research', 'research-approach', 'plan', 'tester', 'review'],
     'the strong model researches, plans and reviews (so no separate ship confirmation); a cheap tester plays the build first');
   const by = (r) => calls.find((c) => c.role === r);
   assert.equal(by('research').model, 'claude-fable-5-1');
+  assert.equal(by('research-approach').model, 'claude-fable-5-1', 'the strong model researches the technical approach too');
+  assert.ok(existsSync(join(repo, 'APPROACH.md')), 'APPROACH.md is committed for the planner and the builders');
+  assert.match(by('plan').prompt + '', /technical researcher wrote APPROACH\.md|APPROACH\.md/, 'the planner is told about it');
   assert.equal(by('plan').model, 'claude-fable-5-1');
   assert.equal(by('review').model, 'claude-fable-5-1');
   assert.equal(by('tester').model, 'haiku');
