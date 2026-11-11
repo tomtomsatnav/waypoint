@@ -20,6 +20,10 @@ const read = (p) => { try { return readFileSync(p, 'utf8'); } catch { return nul
 const json = (p) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; } };
 const tail = (p, n) => (read(p) || '').trimEnd().split('\n').slice(-n).filter(Boolean);
 const alive = (pattern) => spawnSync('pgrep', ['-f', pattern], { encoding: 'utf8' }).status === 0;
+// Scoped to this run's folder: the autopilot by its working directory, the supervisor by the folder on its command line.
+const cwdOf = (pid) => { const r = spawnSync('lsof', ['-a', '-d', 'cwd', '-p', pid, '-Fn'], { encoding: 'utf8' }); const m = (r.stdout || '').match(/^n(.+)$/m);
+  if (m) return m[1]; try { return spawnSync('readlink', [`/proc/${pid}/cwd`], { encoding: 'utf8' }).stdout.trim(); } catch { return ''; } };
+const autopilotAlive = () => (spawnSync('pgrep', ['-f', 'waypoint.mjs autopilot (start|resume)'], { encoding: 'utf8' }).stdout || '').split('\n').filter(Boolean).some((pid) => cwdOf(pid) === join(WORK, 'autopilot'));
 const mtime = (p) => { try { return statSync(p).mtimeMs; } catch { return null; } };
 function commits(repo, n = 6) {
   if (!existsSync(join(repo, '.git'))) return [];
@@ -32,7 +36,7 @@ function autopilotArm() {
   const repo = join(WORK, 'autopilot');
   const st = json(join(repo, '.git', 'autopilot', 'state.json'));
   const log = tail(join(WORK, 'autopilot.err'), 14);
-  const running = alive('waypoint.mjs autopilot (start|resume)');
+  const running = autopilotAlive();
   const a = { name: 'autopilot', kind: 'autopilot', running, ended: !!st?.finished, end: st?.finished ?? null, log, commits: commits(repo), commitCount: commitCount(repo) };
   if (!st) return { ...a, state: 'not started' };
   a.spent = st.spentUsd; a.budget = st.policy?.budgetUsd; a.overhead = st.overheadUsd ?? null;
@@ -95,7 +99,7 @@ function snapshot() {
   const deadline = (read(join(WORK, 'deadline')) || '').trim() || null;
   const s = {
     work: WORK, now: Date.now(), deadline, finished: existsSync(join(WORK, 'FINISHED')),
-    supervisor: alive('run-e13.sh _supervise'),
+    supervisor: alive(`run-e13.sh _supervise ${WORK}$`),
     compared: (read(join(WORK, 'compared.from')) || '').trim().split('\n').filter(Boolean).length,
     arms: arms.map((a) => ({ ...(a === 'autopilot' ? autopilotArm() : baselineArm(a)), prompts: a === 'autopilot' ? autopilotPrompts(join(WORK, a)) : sessionPrompts(a) })),
     brief: arms.length ? read(join(WORK, arms[0], 'BRIEF.md')) : null,

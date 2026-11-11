@@ -23,6 +23,11 @@ export WAYPOINT_SETTING_SOURCES=project,local   # keep your own Claude Code sett
 export NODE_PATH="$WORK/tools/node_modules"      # so every arm can require('playwright') to test in a real browser
 say() { echo "[e13 $(date -u +%H:%M)] $*" >> "$WORK/supervise.log"; }
 alive() { pgrep -f "$1" >/dev/null 2>&1; }
+# Everything below is scoped to this run's folder, so two runs on one machine never touch each other's processes.
+cwd_of() { local c; c=$(lsof -a -d cwd -p "$1" -Fn 2>/dev/null | sed -n 's/^n//p'); [ -n "$c" ] || c=$(readlink "/proc/$1/cwd" 2>/dev/null); echo "$c"; }
+ap_pids() { for pid in $(pgrep -f "waypoint.mjs autopilot (start|resume)" 2>/dev/null); do [ "$(cwd_of "$pid")" = "$WORK/autopilot" ] && echo "$pid"; done; }
+ap_alive() { [ -n "$(ap_pids)" ]; }
+SUP="run-e13.sh _supervise $WORK\$"      # the supervisor carries its run folder in its command line
 has() { case " $ARMS " in *" $1 "*) return 0;; esac; return 1; }
 [ -f "$WORK/.arms-run" ] && ARMS=$(cat "$WORK/.arms-run")   # a started run keeps its arms
 
@@ -67,7 +72,7 @@ ended() { # 0 if the arm has finished for good
 all_ended() { for a in $ARMS; do ended "$a" || return 1; done; return 0; }
 
 launch() { # start any arm that is not running and not finished
-  if has autopilot && ! ended autopilot && ! alive "waypoint.mjs autopilot (start|resume)"; then
+  if has autopilot && ! ended autopilot && ! ap_alive; then
     local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/art/*.jpg | paste -sd, -)
     if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume); else sub=(start --brief-file BRIEF.md --references "$refs" --budget-usd "$BUDGET" --hours "$HOURS"); fi
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
@@ -96,7 +101,7 @@ supervise() { # every 5 minutes: relaunch anything that died; at the end, stop t
 }
 
 stop_arms() { # the arms, then only the claude sessions working inside $WORK (never your other Claude sessions)
-  pkill -f "waypoint.mjs autopilot (start|resume)"; pkill -f "e13/baseline.mjs"; sleep 2
+  for pid in $(ap_pids); do kill "$pid" 2>/dev/null; done; pkill -f "baseline.mjs $WORK/"; sleep 2
   for pid in $(pgrep -f "claude -p" 2>/dev/null); do
     cwd=$(lsof -a -d cwd -p "$pid" -Fn 2>/dev/null | sed -n 's/^n//p'); [ -n "$cwd" ] || cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null)
     case "$cwd" in "$WORK"/*) kill "$pid" 2>/dev/null;; esac
@@ -105,20 +110,20 @@ stop_arms() { # the arms, then only the claude sessions working inside $WORK (ne
 case "${1:-start}" in
   start)
     setup
-    if alive "run-e13.sh _supervise"; then echo "already running; ./run-e13.sh status"; exit 0; fi
+    if alive "$SUP"; then echo "already running; ./run-e13.sh status"; exit 0; fi
     # caffeinate keeps a Mac awake while this runs (plugged in; with the lid closed only in clamshell mode with a display)
-    if command -v caffeinate >/dev/null; then E13_WORK="$WORK" nohup caffeinate -ims "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null &
-    else E13_WORK="$WORK" nohup "$HERE/run-e13.sh" _supervise >> "$WORK/supervise.log" 2>&1 < /dev/null & fi
+    if command -v caffeinate >/dev/null; then E13_WORK="$WORK" nohup caffeinate -ims "$HERE/run-e13.sh" _supervise "$WORK" >> "$WORK/supervise.log" 2>&1 < /dev/null &
+    else E13_WORK="$WORK" nohup "$HERE/run-e13.sh" _supervise "$WORK" >> "$WORK/supervise.log" 2>&1 < /dev/null & fi
     sleep 5; echo "started. deadline $(cat "$WORK/deadline"); work in $WORK; log $WORK/supervise.log"; E13_WORK="$WORK" "$HERE/run-e13.sh" status ;;
   _supervise) supervise ;;
   status)
     echo "deadline: $(cat "$WORK/deadline" 2>/dev/null)   now: $(date -u +%FT%TZ)"
     [ -f "$WORK/FINISHED" ] && echo "FINISHED: games are being served blind from http://localhost:3101"
-    alive "run-e13.sh _supervise" && echo "supervisor: running" || echo "supervisor: not running (./run-e13.sh start)"
-    for a in $ARMS; do ended $a && s=ended || { [ $a = autopilot ] && p="waypoint.mjs autopilot" || p="baseline.mjs $WORK/$a "; alive "$p" && s=running || s=down; }; echo "arm $a: $s"; done
+    alive "$SUP" && echo "supervisor: running" || echo "supervisor: not running (./run-e13.sh start)"
+    for a in $ARMS; do ended $a && s=ended || { if [ $a = autopilot ]; then ap_alive && s=running || s=down; else alive "baseline.mjs $WORK/$a " && s=running || s=down; fi; }; echo "arm $a: $s"; done
     [ -f "$WORK/compared.from" ] && echo "compared with: $(paste -sd';' "$WORK/compared.from")"
     tail -n 3 "$WORK/supervise.log" 2>/dev/null ;;
-  stop) pkill -f "run-e13.sh _supervise"; stop_arms; echo stopped ;;
+  stop) pkill -f "$SUP"; stop_arms; echo stopped ;;
   serve) "$HERE/blind-serve.sh" start "$WORK" ;;
   reveal) "$HERE/blind-serve.sh" reveal "$WORK" ;;
   *) sed -n 2,16p "$HERE/run-e13.sh" ;;
