@@ -163,10 +163,10 @@ function arm(a){let h='<div class="panel"><h2>'+esc(a.name)+' '+pill(a.state)+'<
 let briefShown=null;
 async function tick(){try{const s=await (await fetch('/api')).json();
  if(s.brief&&s.brief!==briefShown){briefShown=s.brief;const t=(s.brief.match(/^#\\s*(.+)$/m)||[])[1]||'Brief';const lead=(s.brief.split('\\n').find(l=>l.trim()&&!l.startsWith('#'))||'');
-  document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead)+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
+  document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead.split('**').join(''))+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
  if(!s.brief)document.getElementById('brief').style.display='none';
  document.getElementById('work').textContent=s.work;document.getElementById('updated').textContent='updated '+new Date().toLocaleTimeString();
- document.getElementById('top').innerHTML='<div class="kv"><span class="dim">Supervisor</span><span>'+(s.finished?pill('finished'):s.supervisor?pill('running'):pill('down'))+'</span><span class="dim">Deadline</span><span>'+(s.deadline?new Date(s.deadline).toLocaleString()+' <span class="dim">('+left(s.deadline)+' left)</span>':'-')+'</span>'+(s.compared?'<span class="dim">Compared with</span><span>'+s.compared+' earlier game'+(s.compared>1?'s':'')+' (blind: the port mapping stays hidden)</span>':'')+'</div>';
+ document.getElementById('top').innerHTML='<div class="kv"><span class="dim">Supervisor</span><span>'+(s.finished?pill('finished'):s.supervisor?pill('running'):pill('down'))+'</span><span class="dim">Deadline</span><span>'+(s.deadline?new Date(s.deadline).toLocaleString()+' <span class="dim">('+(left(s.deadline)==='passed'?'passed':left(s.deadline)+' left')+')</span>':'-')+'</span>'+(s.compared?'<span class="dim">Compared with</span><span>'+s.compared+' earlier game'+(s.compared>1?'s':'')+' (blind: the port mapping stays hidden)</span>':'')+'</div>';
  document.getElementById('warnings').innerHTML=s.warnings.length?s.warnings.map(([k,m])=>'<div class="warn w-'+k+'">'+esc(m)+'</div>').join(''):'<div class="warn w-good">Everything looks fine.</div>';
  document.getElementById('arms').innerHTML=s.arms.map(arm).join('');document.getElementById('sup').textContent=s.supervise.join('\\n');
 }catch(e){document.getElementById('updated').textContent='cannot reach the dashboard server'}}
