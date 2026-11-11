@@ -22,7 +22,7 @@ const usage = () => out({ type: 'rate_limit_event', rate_limit_info: { status: '
   five_hour: { utilization: Number(process.env.FAKE_AP_UTIL ?? 0.1), resetsAt: Date.now() / 1000 + 4 * 3600, status: 'allowed' },
   seven_day: { utilization: 0.1, resetsAt: Date.now() / 1000 + 6 * 86400, status: 'allowed' } } } });
 const done = (role) => {
-  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, resume: flag('--resume') ?? null, prompt: p.slice(0, 300), cwd: process.cwd(), start, end: Date.now() }) + '\n');
+  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, resume: flag('--resume') ?? null, capped: argv.includes('--max-budget-usd'), prompt: p.slice(0, 300), cwd: process.cwd(), start, end: Date.now() }) + '\n');
 };
 const result = () => out({ type: 'result', subtype: 'success', total_cost_usd: 0.05, num_turns: 1, result: 'ok' });
 const m = (re) => (p.match(re) || [])[1];
@@ -32,6 +32,7 @@ if (/^You are the researcher for a project/.test(p)) { writeFileSync('EXPECTATIO
 if (/^You are the technical researcher/.test(p)) { writeFileSync('APPROACH.md', '# Approach\n- Hard problems: rendering a dense character grid fast\n'); done('research-approach'); usage(); result(); process.exit(0); }
 if (/^You are the researcher for an autonomous build/.test(p)) { writeFileSync(m(/notes to (\S+):/), 'notes\n'); done('research-stuck'); usage(); result(); process.exit(0); }
 if (/^You are the planner/.test(p)) {
+  if (process.env.FAKE_AP_PLAN_FAIL_ONCE && !existsSync(process.env.FAKE_AP_PLAN_FAIL_ONCE)) { writeFileSync(process.env.FAKE_AP_PLAN_FAIL_ONCE, '1'); writeFileSync('SPEC.md', '# spec (cut short)\n'); done('plan'); usage(); out({ type: 'result', subtype: 'error_max_budget_usd', is_error: true, total_cost_usd: 5, result: '' }); process.exit(1); }
   writeFileSync(m(/Write the milestone as JSON to (\S+):/), process.env.FAKE_AP_PLAN);
   writeFileSync(join(dirname(m(/Write the milestone as JSON to (\S+):/)), 'ship.json'), JSON.stringify({ checks: [{ name: 'ok', run: 'true' }] }));
   if (process.env.FAKE_AP_ACCEPT) { mkdirSync('tests', { recursive: true }); writeFileSync('tests/accept.test.mjs', '// acceptance\n'); }

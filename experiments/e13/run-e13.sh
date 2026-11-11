@@ -13,7 +13,7 @@
 #   ./run-e13.sh reveal   which port was which (only after your blind feedback)
 #
 # Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52),
-# E13_SEED (the starting repo; default ./seed), E13_BUDGET (60), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
+# E13_SEED (the starting repo; default ./seed), E13_BUDGET (60, or none for no spending caps), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 WORK=${E13_WORK:-$HOME/emberfall-e13}; HOURS=${E13_HOURS:-52}; BUDGET=${E13_BUDGET:-60}
@@ -74,14 +74,14 @@ all_ended() { for a in $ARMS; do ended "$a" || return 1; done; return 0; }
 launch() { # start any arm that is not running and not finished
   if has autopilot && ! ended autopilot && ! ap_alive; then
     local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/art/*.jpg | paste -sd, -)
-    if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume); else sub=(start --brief-file BRIEF.md --references "$refs" --budget-usd "$BUDGET" --hours "$HOURS"); fi
+    if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume); else sub=(start --brief-file BRIEF.md --references "$refs" --hours "$HOURS"); [ "$BUDGET" = none ] || sub+=(--budget-usd "$BUDGET"); fi
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
     say "launched autopilot (${sub[0]})"
   fi
   for a in single loop researched; do
     has $a || continue
     if ! ended $a && ! alive "baseline.mjs $WORK/$a "; then
-      (nohup node "$HERE/baseline.mjs" "$WORK/$a" $a sonnet "$BUDGET" "$(cat "$WORK/deadline")" >> "$WORK/$a.out" 2>&1 < /dev/null &)
+      (nohup node "$HERE/baseline.mjs" "$WORK/$a" $a sonnet "$([ "$BUDGET" = none ] && echo 100000 || echo "$BUDGET")" "$(cat "$WORK/deadline")" >> "$WORK/$a.out" 2>&1 < /dev/null &)
       say "launched $a"
     fi
   done

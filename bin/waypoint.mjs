@@ -44,7 +44,7 @@ const USAGE = `waypoint <command>
                           The default way to build from a brief (it won E13c): a short research pass writes EXPECTATIONS.md
                           (what users expect that the brief does not say), then one plain session builds it, waiting out
                           usage limits and resuming after them or a restart. Run it again to carry on.
-  autopilot start --brief-file <f> --budget-usd <usd> [--hours 48] [--references a.png,b.png] [--strong-model m]
+  autopilot start --brief-file <f> [--budget-usd <usd>, default none] [--hours 48] [--references a.png,b.png] [--strong-model m]
                           [--config-dir d] [--verify <cmd>] [--weekly-ceiling 0.85] [--force-model m]
                           [--review-model m] [--research-model m] [--tester-model haiku] [--overhead-share 0.3] [--no-research]
                           [--max-workers 1] [--yes]
@@ -190,8 +190,10 @@ async function main() {
       configDir: o['config-dir'], claude: o.claude, verify: o.verify, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'),
       forceModel: o['force-model'], reviewModel: o['review-model'], researchModel: o['research-model'], testerModel: o['tester-model'], maxWorkers: num(o['max-workers'], 'max-workers'),
       overheadShare: num(o['overhead-share'], 'overhead-share'), research: o['no-research'] ? false : undefined };
-    if (sub === 'start' && (!opts.brief || !(opts.budgetUsd > 0))) throw new Error('autopilot start needs --brief-file and --budget-usd');
-    process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: budget $${opts.budgetUsd ?? existing?.policy.budgetUsd}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
+    if (sub === 'start' && !opts.brief) throw new Error('autopilot start needs --brief-file');
+    if (sub === 'start' && opts.budgetUsd != null && !(opts.budgetUsd > 0)) throw new Error('--budget-usd must be positive (leave it out for no budget)');
+    const shownBudget = opts.budgetUsd ?? existing?.policy.budgetUsd;
+    process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: ${shownBudget ? `budget $${shownBudget}` : 'no budget (no spending caps; plan usage limits still pause it)'}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
     if (!o.yes) { process.stderr.write('[autopilot] not started: pass --yes to run (spends money).\n'); return 0; }
     const st = await autopilot(opts);
     process.stdout.write(statusText(st));

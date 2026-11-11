@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
 import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS } from '../lib/autopilot.mjs';
@@ -200,4 +200,41 @@ test('builders: Haiku codes and Sonnet does UI, each with exactly one step up', 
   for (const t of ['ui-design', 'visual-polish', 'architecture'])
     assert.deepEqual([0, 1].map((a) => pick(t, a, {}, CHEAP_LADDERS)), ['sonnet', 'opus'], t);
   assert.ok(Object.values(CHEAP_LADDERS).every((l) => l.length === 2), 'one step up, then back to the planner');
+});
+
+test('autopilot: a planning run that stops before the milestone gets a second, shorter run instead of ending everything', async () => {
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+  const said = [];
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_PLAN_FAIL_ONCE: join(repo, '..', `${repo.split('/').pop()}-planfail`) });
+  try {
+    const st = await autopilot({ repo, brief: 'b', budgetUsd: 60, deadlineHours: 1, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: (m) => said.push(m) });
+    assert.equal(st.finished, 'shipped');
+    const roles = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).map((c) => c.role);
+    assert.deepEqual(roles.slice(0, 2), ['plan', 'plan'], 'two planning runs');
+    assert.ok(said.some((m) => /stopped before writing the first milestone \(error_max_budget_usd/.test(m)), 'the log says why');
+    assert.match(readFileSync(log, 'utf8'), /previous planning run stopped before it finished/, 'the second run is told to finish, not restart');
+  } finally { delete process.env.FAKE_AP_PLAN_FAIL_ONCE; delete process.env.FAKE_AP_PLAN; }
+});
+
+test('no-budget mode: no spending cap on any call or builder session; usage limits and time limits still apply', async () => {
+  const { buildArgs } = await import('../lib/runner.mjs');
+  assert.ok(!buildArgs({ prompt: 'p', model: 'haiku', budgetUsd: Infinity, sessionId: 's' }).includes('--max-budget-usd'));
+  assert.throws(() => buildArgs({ prompt: 'p', model: 'haiku', sessionId: 's' }), /max-budget-usd/, 'a missing cap is still an error');
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan) });
+  try {
+    const st = await autopilot({ repo, brief: 'b', deadlineHours: 1, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+    assert.equal(st.finished, 'shipped');
+    assert.equal(st.policy.unlimited, true);
+    assert.equal(st.policy.budgetUsd, null);
+    const calls = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.deepEqual([...new Set(calls.map((c) => c.role))].sort(), ['plan', 'research', 'research-approach', 'review', 'tester', 'work']);
+    assert.ok(calls.every((c) => c.capped === false), `no call had --max-budget-usd: ${calls.filter((c) => c.capped).map((c) => c.role)}`);
+  } finally { delete process.env.FAKE_AP_PLAN; }
 });
