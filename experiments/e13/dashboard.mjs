@@ -70,6 +70,23 @@ function baselineArm(name) {
   return a;
 }
 
+// The prompt each kind of arm is given, read from the scripts themselves so it can never drift from what ran.
+const HERE = new URL('.', import.meta.url).pathname;
+function sessionPrompts(mode) {
+  const src = read(join(HERE, 'baseline.mjs')) || '';
+  const first = (src.match(/const FIRST = `([^`]*)`/) || [])[1] || '';
+  const extra = (src.match(/mode === 'researched' \? ` ([^`]*)`/) || [])[1] || '';
+  const again = (src.match(/const AGAIN = `([^`]*)`/) || [])[1] || '';
+  const out = [{ label: mode === 'researched' ? 'After the research step, the session is given' : 'The session is given', text: first + (mode === 'researched' && extra ? ` ${extra}` : '') }];
+  if (mode === 'loop') out.push({ label: 'Each time it stops', text: again });
+  return out;
+}
+function autopilotPrompts(work) {
+  const refs = (() => { try { return spawnSync('bash', ['-c', 'ls references/*.png references/art/*.jpg 2>/dev/null | wc -l'], { cwd: work, encoding: 'utf8' }).stdout.trim(); } catch { return '?'; } })();
+  return [{ label: 'Started as', text: `waypoint autopilot start --brief-file BRIEF.md --references (${refs} images) --budget-usd ${json(join(work, '.git', 'autopilot', 'state.json'))?.policy?.budgetUsd ?? '?'}` },
+    { label: 'Then', text: 'Sonnet researches what users expect (EXPECTATIONS.md); Fable plans from the brief, the images and that file (SPEC.md, FEATURES.json, milestones with checks); cheaper models build one checked task at a time; Sonnet reviews each milestone and Fable confirms a ship.' }];
+}
+
 function snapshot() {
   const arms = (read(join(WORK, '.arms-run')) || read(join(WORK, '.arms')) || '').trim().split(/\s+/).filter((x) => x && !x.startsWith('compared'));
   const deadline = (read(join(WORK, 'deadline')) || '').trim() || null;
@@ -77,7 +94,8 @@ function snapshot() {
     work: WORK, now: Date.now(), deadline, finished: existsSync(join(WORK, 'FINISHED')),
     supervisor: alive('run-e13.sh _supervise'),
     compared: (read(join(WORK, 'compared.from')) || '').trim().split('\n').filter(Boolean).length,
-    arms: arms.map((a) => (a === 'autopilot' ? autopilotArm() : baselineArm(a))),
+    arms: arms.map((a) => ({ ...(a === 'autopilot' ? autopilotArm() : baselineArm(a)), prompts: a === 'autopilot' ? autopilotPrompts(join(WORK, a)) : sessionPrompts(a) })),
+    brief: arms.length ? read(join(WORK, arms[0], 'BRIEF.md')) : null,
     supervise: tail(join(WORK, 'supervise.log'), 6),
   };
   const w = [];
@@ -113,11 +131,13 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .warn{padding:9px 12px;border-radius:8px;margin:6px 0;border-left:4px solid}.w-bad{background:#2a1414;border-color:var(--bad)}.w-warn{background:#2a2210;border-color:var(--warn)}.w-info{background:#10213a;border-color:var(--info)}.w-good{background:#10291a;border-color:var(--good)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0}.bar{height:8px;background:#232833;border-radius:4px;overflow:hidden;margin-top:4px}.bar>i{display:block;height:100%;background:var(--accent)}
 .log{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.brief{white-space:pre-wrap;max-height:480px;overflow:auto;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:8px}
+.prompt{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;white-space:pre-wrap}
 .task{display:flex;gap:8px;align-items:baseline;padding:2px 0}.t-done{color:var(--good)}.t-stuck{color:var(--bad)}.t-retry{color:var(--warn)}.t-pending{color:var(--dim)}
 details summary{cursor:pointer;color:var(--dim);margin-top:8px}ul{margin:4px 0;padding-left:18px}
 @media (max-width:600px){header,main{padding:12px 14px}.grid{grid-template-columns:1fr}}
 </style></head><body><header><h1>Run dashboard</h1><span class="dim mono" id="work"></span><span class="dim" id="updated"></span></header>
-<main><section class="panel" id="top"></section><section id="warnings"></section><section class="grid" id="arms"></section>
+<main><section class="panel" id="brief"></section><section class="panel" id="top"></section><section id="warnings"></section><section class="grid" id="arms"></section>
 <section class="panel"><h2>Supervisor log</h2><div class="log mono" id="sup"></div></section></main>
 <script>
 const esc=(s)=>String(s??'').replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -134,12 +154,17 @@ function arm(a){let h='<div class="panel"><h2>'+esc(a.name)+' '+pill(a.state)+'<
   if(a.current)h+='<span class="dim">Now</span><span>'+esc(a.current.line)+' <span class="dim">· for '+Math.round((Date.now()-a.current.since)/60000)+' min</span></span>';
   if(a.gate)h+='<span class="dim">Last gate</span><span class="dim">'+esc(a.gate)+'</span>';}
  h+='</div>';
+ if(a.prompts?.length)h+='<details><summary>Prompt</summary>'+a.prompts.map(p=>'<div class="dim" style="margin-top:6px">'+esc(p.label)+'</div><div class="prompt mono">'+esc(p.text)+'</div>').join('')+'</details>';
  if(a.milestones?.length){const m=a.milestones.at(-1);h+='<div><b>Milestone '+m.n+'</b> <span class="dim">'+esc(m.title)+' · '+esc(m.status)+'</span></div>';
   for(const t of m.tasks){const st=a.current&&a.current.line.includes(t.id)&&t.status!=='done'?'running':t.status;h+='<div class="task mono"><span class="t-'+(st==='running'?'retry':t.status)+'">●</span><span>'+esc(t.id)+'</span><span class="dim">'+esc(st)+(t.tries.length?' · '+esc(t.tries.join(' ')):'')+'</span></div>';}
   if(a.milestones.length>1)h+='<details><summary>Earlier milestones ('+(a.milestones.length-1)+')</summary><ul>'+a.milestones.slice(0,-1).map(x=>'<li>'+x.n+'. '+esc(x.title)+' <span class="dim">'+esc(x.status)+(x.verdict?' → '+esc(x.verdict):'')+'</span></li>').join('')+'</ul></details>';}
  h+='<details open><summary>Latest commits</summary><ul>'+a.commits.map(c=>'<li><span class="dim">'+ago(c.at)+'</span> '+esc(c.subject)+'</li>').join('')+'</ul></details>';
  h+='<details><summary>Log</summary><div class="log mono">'+a.log.map(esc).join('\\n')+'</div></details></div>';return h}
+let briefShown=null;
 async function tick(){try{const s=await (await fetch('/api')).json();
+ if(s.brief&&s.brief!==briefShown){briefShown=s.brief;const t=(s.brief.match(/^#\\s*(.+)$/m)||[])[1]||'Brief';const lead=(s.brief.split('\\n').find(l=>l.trim()&&!l.startsWith('#'))||'');
+  document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead)+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
+ if(!s.brief)document.getElementById('brief').style.display='none';
  document.getElementById('work').textContent=s.work;document.getElementById('updated').textContent='updated '+new Date().toLocaleTimeString();
  document.getElementById('top').innerHTML='<div class="kv"><span class="dim">Supervisor</span><span>'+(s.finished?pill('finished'):s.supervisor?pill('running'):pill('down'))+'</span><span class="dim">Deadline</span><span>'+(s.deadline?new Date(s.deadline).toLocaleString()+' <span class="dim">('+left(s.deadline)+' left)</span>':'-')+'</span>'+(s.compared?'<span class="dim">Compared with</span><span>'+s.compared+' earlier game'+(s.compared>1?'s':'')+' (blind: the port mapping stays hidden)</span>':'')+'</div>';
  document.getElementById('warnings').innerHTML=s.warnings.length?s.warnings.map(([k,m])=>'<div class="warn w-'+k+'">'+esc(m)+'</div>').join(''):'<div class="warn w-good">Everything looks fine.</div>';
