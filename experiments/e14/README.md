@@ -27,7 +27,15 @@ E13_WORK=~/gloamreach-e14 E13_SEED=$HOME/waypoint/experiments/e14/seed E13_ARMS=
   ~/waypoint/experiments/e13/run-e13.sh start
 ```
 
-Check on it with `E13_WORK=~/gloamreach-e14 ~/waypoint/experiments/e13/run-e13.sh status`. At the end both games are served
+Check on it with `E13_WORK=~/gloamreach-e14 ~/waypoint/experiments/e13/run-e13.sh status`, or open the dashboard:
+
+```sh
+node ~/waypoint/experiments/e13/dashboard.mjs ~/gloamreach-e14      # then http://localhost:3099 (refreshes every 30 s)
+```
+
+It shows the supervisor, the deadline, each arm's state (running, paused for usage, ended, down), spend, commits, the
+autopilot's current task and milestone, plan usage and logs, with warnings for an arm that is down, an attempt near its
+time limit, repeated wall-clock caps and long gaps without commits. It never shows the blind port mapping. At the end both games are served
 blind on ports 3101 and 3102 with a notification; give a verdict before
 `E13_WORK=~/gloamreach-e14 ~/waypoint/experiments/e13/run-e13.sh reveal`.
 
