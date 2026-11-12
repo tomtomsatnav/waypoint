@@ -39,6 +39,11 @@ if (/^You are the planner/.test(p)) {
   done('plan'); usage(); result(); process.exit(0);
 }
 if (/^You are the tester/.test(p)) { writeFileSync(m(/3\. Write (\S+) in Markdown/), '# Tester report\n- works: everything tried (shot: a.png)\n'); done('tester'); usage(); result(); process.exit(0); }
+if (/reviewer/.test(p) && process.env.FAKE_AP_REVIEW_LIMIT_ONCE && !existsSync(process.env.FAKE_AP_REVIEW_LIMIT_ONCE)) {
+  writeFileSync(process.env.FAKE_AP_REVIEW_LIMIT_ONCE, '1'); done('review-limited');
+  out({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', unifiedWindows: { five_hour: { utilization: 1, resetsAt: Date.now() / 1000 + 1, status: 'rejected' }, seven_day: { utilization: 0.3, resetsAt: Date.now() / 1000 + 86400, status: 'allowed' } } } });
+  out({ type: 'result', subtype: 'success', is_error: true, total_cost_usd: 0, result: "You've hit your 5-hour limit" }); process.exit(1);
+}
 if (/reviewer/.test(p)) { if (process.env.FAKE_AP_LOG) appendFileSync(process.env.FAKE_AP_LOG + '.review-prompts', p + '\n----\n'); const rf = m(/Then write (\S+) as JSON/);
   const mode = process.env.FAKE_AP_REVIEW_MODE; const mark = process.env.FAKE_AP_LOG + '.review-once';
   if (mode === 'comments') writeFileSync(rf, '{\n  "verdict": "ship", // or continue\n  "assessment": "fine, see http://x//y",\n}\n');

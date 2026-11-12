@@ -293,3 +293,19 @@ test('thinking calls have time limits, stated in their prompts; no spending cap 
     assert.match(readFileSync(log + '.review-prompts', 'utf8'), /Time limit: about 15 minutes for this whole job/);
   } finally { delete process.env.FAKE_AP_PLAN; }
 });
+
+test('a thinking call refused by the usage limit waits for the reset and runs again, not counted as a failed attempt', async () => {
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+  const said = [];
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_REVIEW_LIMIT_ONCE: join(repo, '..', `${repo.split('/').pop()}-rl`) });
+  try {
+    const st = await autopilot({ repo, brief: 'b', deadlineHours: 1, research: false, limitMarginMs: 500, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: (m) => said.push(m) });
+    assert.equal(st.finished, 'shipped');
+    const roles = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).map((c) => c.role);
+    assert.deepEqual(roles.filter((r) => /review/.test(r)), ['review-limited', 'review'], 'refused once, then the same review ran after the reset');
+    assert.ok(!said.some((m) => /review attempt 1 not usable/.test(m)), 'the refusal did not use up a review attempt');
+  } finally { delete process.env.FAKE_AP_REVIEW_LIMIT_ONCE; delete process.env.FAKE_AP_PLAN; }
+});
