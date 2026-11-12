@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
+import { pressurePolicy } from '../lib/autopilot.mjs';
 import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS } from '../lib/autopilot.mjs';
 import { pick } from '../lib/routing.mjs';
 import { buildArgs } from '../lib/runner.mjs';
@@ -237,4 +238,17 @@ test('no-budget mode: no spending cap on any call or builder session; usage limi
     assert.deepEqual([...new Set(calls.map((c) => c.role))].sort(), ['plan', 'research', 'research-approach', 'review', 'tester', 'work']);
     assert.ok(calls.every((c) => c.capped === false), `no call had --max-budget-usd: ${calls.filter((c) => c.capped).map((c) => c.role)}`);
   } finally { delete process.env.FAKE_AP_PLAN; }
+});
+
+test('no-budget mode: running ahead of the weekly pace does not lower effort; real closeness to a limit still does', () => {
+  const paceFrom = { at: NOW - 10 * H, util: 0.1 };
+  const ahead = u(0.2, 3 * H); // 20% of the 5-hour window used, weekly 30%: well ahead of an even pace from 10% ten hours ago
+  const budgeted = { policy: { fiveHourCeiling: 0.9, weeklyCeiling: 0.85 }, paceFrom };
+  const unlimited = { policy: { fiveHourCeiling: 0.9, weeklyCeiling: 0.85, unlimited: true }, paceFrom };
+  assert.equal(pressure(ahead, pressurePolicy(budgeted), NOW).level, 'tight', 'budgeted runs keep the even weekly pacing');
+  assert.equal(pressure(ahead, pressurePolicy(unlimited), NOW).level, 'normal', 'no-budget runs do not');
+  assert.equal(pressure(u(0.8, 2 * H), pressurePolicy(unlimited), NOW).level, 'tight', 'little of the 5-hour window left still counts');
+  const weekly = parseUsage({ status: 'allowed', unifiedWindows: { five_hour: { utilization: 0.1, resetsAt: (NOW + 3 * H) / 1000, status: 'allowed' }, seven_day: { utilization: 0.8, resetsAt: (NOW + 80 * H) / 1000, status: 'allowed' } } }, NOW);
+  const w = pressure(weekly, pressurePolicy(unlimited), NOW);
+  assert.deepEqual([w.level, w.canWait], ['tight', false], 'weekly use past 75% counts, without waiting for a 5-hour reset');
 });
