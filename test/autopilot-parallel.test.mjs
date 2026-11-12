@@ -4,7 +4,7 @@ import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
 import { pressurePolicy } from '../lib/autopilot.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS, parseLooseJson } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS, parseLooseJson, CALL_MINUTES } from '../lib/autopilot.mjs';
 import { pick } from '../lib/routing.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
@@ -280,3 +280,16 @@ for (const [mode, expectReviews] of [['comments', 1], ['nomilestone-once', 2]]) 
     } finally { delete process.env.FAKE_AP_REVIEW_MODE; delete process.env.FAKE_AP_PLAN; }
   });
 }
+
+test('thinking calls have time limits, stated in their prompts; no spending cap needed', async () => {
+  assert.deepEqual([CALL_MINUTES.review, CALL_MINUTES.plan, CALL_MINUTES.research, CALL_MINUTES['research-stuck']], [15, 30, 20, 10]);
+  const repo = makeRepo();
+  sh(repo, 'git config user.email t@x && git config user.name t');
+  const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+  const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+  Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan) });
+  try {
+    await autopilot({ repo, brief: 'b', deadlineHours: 1, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: () => {} });
+    assert.match(readFileSync(log + '.review-prompts', 'utf8'), /Time limit: about 15 minutes for this whole job/);
+  } finally { delete process.env.FAKE_AP_PLAN; }
+});

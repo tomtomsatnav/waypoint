@@ -116,7 +116,8 @@ function snapshot() {
     const caps = a.log.filter((l) => /cap:wall-clock/.test(l));
     if (caps.length >= 2) w.push(['warn', `${a.name}: ${caps.length} attempts in the recent log ran out of time (cap:wall-clock): a task may be stuck on a hanging test.`]);
     const last = a.commits[0]?.at;
-    if (!a.ended && !a.pausedUntil && a.state !== 'not started' && last && Date.now() - last > 90 * 60000)
+    const busySince = a.current?.since ?? 0; // a step that started recently (say after a resume) is not a stall
+    if (!a.ended && !a.pausedUntil && a.state !== 'not started' && last && Date.now() - last > 90 * 60000 && Date.now() - busySince > 90 * 60000)
       w.push(['warn', `${a.name}: no commit for ${Math.round((Date.now() - last) / 60000)} min and not paused for usage.`]);
     if (a.pausedUntil) w.push(['info', `${a.name} is paused for plan usage until ${new Date(a.pausedUntil).toLocaleTimeString()}; it resumes by itself.`]);
     if (a.research && a.research.wrote === false) w.push(['warn', `${a.name}: the research step did not write EXPECTATIONS.md; the session runs without it.`]);
