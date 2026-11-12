@@ -4,7 +4,7 @@ import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
 import { pressurePolicy } from '../lib/autopilot.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS, parseLooseJson } from '../lib/autopilot.mjs';
 import { pick } from '../lib/routing.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
@@ -252,3 +252,31 @@ test('no-budget mode: running ahead of the weekly pace does not lower effort; re
   const w = pressure(weekly, pressurePolicy(unlimited), NOW);
   assert.deepEqual([w.level, w.canWait], ['tight', false], 'weekly use past 75% counts, without waiting for a 5-hour reset');
 });
+
+test('reviews: JSON with comments, trailing commas, fences or prose is read; a URL with // in a string survives', () => {
+  assert.deepEqual(parseLooseJson('{"a":1}'), { a: 1 });
+  assert.deepEqual(parseLooseJson('{ "verdict": "continue", // only if\n "m": [1,2,], "u": "http://x//y" /* c */ }'), { verdict: 'continue', m: [1, 2], u: 'http://x//y' });
+  assert.deepEqual(parseLooseJson('Here it is:\n```json\n{"x": "a\\"b"}\n```\nDone.'), { x: 'a"b' });
+  assert.equal(parseLooseJson('not json at all'), null);
+});
+
+for (const [mode, expectReviews] of [['comments', 1], ['nomilestone-once', 2]]) {
+  test(`reviews: a review written ${mode === 'comments' ? 'with // comments is accepted' : 'without a milestone is retried with the reason, not the end of the run'}`, async () => {
+    const repo = makeRepo();
+    sh(repo, 'git config user.email t@x && git config user.name t');
+    const log = join(repo, '..', `${repo.split('/').pop()}-ap.log`);
+    const plan = { title: 's', tasks: [{ id: 'm1-a', type: 'code-simple', after: [], goal: 'create a.txt', checks: [{ name: 'a', run: 'test -f a.txt' }] }] };
+    const said = [];
+    Object.assign(process.env, { FAKE_AP_LOG: log, FAKE_AP_PLAN: JSON.stringify(plan), FAKE_AP_REVIEW_MODE: mode });
+    try {
+      const st = await autopilot({ repo, brief: 'b', deadlineHours: 1, research: false, claude: join(ROOT, 'test', 'fake-autopilot.mjs'), log: (m) => said.push(m) });
+      assert.equal(st.finished, 'shipped');
+      const reviews = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).filter((c) => c.role === 'review');
+      assert.equal(reviews.length, expectReviews);
+      if (mode !== 'comments') {
+        assert.ok(said.some((m) => /review attempt 1 not usable \(it has no "milestone" with tasks/.test(m)));
+        assert.match(readFileSync(log + '.review-prompts', 'utf8'), /Your previous attempt at .* was not usable: it has no "milestone"/);
+      }
+    } finally { delete process.env.FAKE_AP_REVIEW_MODE; delete process.env.FAKE_AP_PLAN; }
+  });
+}

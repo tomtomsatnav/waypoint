@@ -4,6 +4,7 @@
 # The mapping is written to <work>/.blind-map.json and not printed until "reveal".
 # Usage: blind-serve.sh start|stop|reveal <work dir>
 set -u
+HERE=$(cd "$(dirname "$0")" && pwd)
 cmd=${1:-start}; WORK=${2:-$HOME/emberfall-e13}; M=$WORK/.blind-map.json
 ARMS=$(cat "$WORK/.arms" 2>/dev/null || echo "autopilot single loop")
 killport() { for pid in $(lsof -ti "tcp:$1" 2>/dev/null); do kill "$pid" 2>/dev/null; done; }
@@ -22,7 +23,10 @@ for p in $PORTS; do
   git -C "$WORK/$a" archive HEAD | tar -x -C "$d"           # committed code only: no history, no autopilot state
   ( cd "$d" && npm install --no-audit --no-fund > "$WORK/blind/$p.install.log" 2>&1
     node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)" 2>/dev/null && npm run build >> "$WORK/blind/$p.install.log" 2>&1
-    PORT=$p nohup npm start > "$WORK/blind/$p.log" 2>&1 < /dev/null & )
+    # A static build (dist/index.html) is served as it is, on this port: start scripts such as "vite preview" ignore PORT
+    # (E14b's game tried port 4173 and failed). Anything else (a game with its own server) gets PORT and npm start.
+    if [ -f dist/index.html ]; then nohup node "$HERE/static-serve.mjs" dist "$p" > "$WORK/blind/$p.log" 2>&1 < /dev/null &
+    else PORT=$p nohup npm start > "$WORK/blind/$p.log" 2>&1 < /dev/null & fi )
 done
 sleep 25
 for p in $PORTS; do

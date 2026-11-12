@@ -65,7 +65,8 @@ setup() {
 
 ended() { # 0 if the arm has finished for good
   case $1 in
-    autopilot) node -e "const s=require('$WORK/autopilot/.git/autopilot/state.json'); process.exit(s.finished ? 0 : 1)" 2>/dev/null ;;
+    # a failed plan or review is not the end: resume tries again
+    autopilot) node -e "const s=require('$WORK/autopilot/.git/autopilot/state.json'); process.exit(s.finished && !['plan-failed','review-failed'].includes(s.finished) ? 0 : 1)" 2>/dev/null ;;
     *) node -e "const s=require('$WORK/$1.baseline.json'); process.exit(['stopped by itself','budget','deadline'].includes(s.end) ? 0 : 1)" 2>/dev/null ;;
   esac
 }
