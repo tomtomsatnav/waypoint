@@ -15,3 +15,18 @@ They set mood, light and palette; translate them into the game's character-drawn
 
 `../look-*.png` are rough static mock-ups of the character-grid style made from these paintings (and, in
 `look-depths-hud.png`, a sketch of the HUD). The game should look better than them, and move.
+
+## Look target (used with permission)
+
+`../look-target-*.png` are frames from a work-in-progress video by **@ansenjeo** (Instagram), "Making the ASCII MMORPG of my
+dreams", used here with the creator's permission as references for the look only:
+
+| File | Shows |
+|---|---|
+| look-target-wide.png | the overall look from the overhead camera: grass, a lake reflecting the moon, trees, all in dense characters |
+| look-target-ripples.png | ripple rings spreading through water, drawn as rings of characters |
+| look-target-grass.png | grass as thousands of fine character strokes with small flowers, and the player model drawn in characters |
+| look-target-reflection.png | the player and the world reflected in still water |
+
+They show the technique and the feel to aim for. Do not copy that project's names, characters, designs or content:
+Gloamreach is its own game.

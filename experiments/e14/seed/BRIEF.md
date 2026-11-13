@@ -27,6 +27,9 @@ libraries as needed.
   scattered with small flowers (`o * .`) and drifting motes.
 - **Water you can see the world in.** Still water shows a real, rippling reflection of the player, enemies, trees and
   buildings above it; anything that touches water sends rings of ripples spreading out, drawn as rings of characters.
+- **The look to aim for** is shown in `references/look-target-*.png` (frames from another developer's work in progress, used
+  with permission; credits in `references/art/ART.md`): match that density, depth, grass and water, in Gloamreach's own
+  world, palette and designs. Do not copy that project's names, characters or content.
 - Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered
   glyphs for tree canopies, fine strokes for grass, flowing marks for water.
 - Materials read through the choice of characters as well as colour: grass, leaves, bark, water, stone, wood, cloth, metal,
