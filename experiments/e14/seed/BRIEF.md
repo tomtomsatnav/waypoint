@@ -1,6 +1,6 @@
 # Gloamreach: brief
 
-Build **Gloamreach**, a dark, punishing action RPG in the souls-like tradition, seen from a locked overhead camera and played in a desktop browser, where
+Build **Gloamreach**, a dark, punishing, mythical action RPG in the souls-like tradition, seen from a locked overhead camera and played in a desktop browser, where
 **everything on screen is drawn with small text characters**: the ground, grass, trees and their leaves, water, stone walls,
 buildings, fog, fire, the player, the enemies, the bosses and the interface. It must be obvious at a glance that the world is
 made of characters, and it must also look genuinely beautiful: atmospheric, detailed, well lit and alive.
@@ -14,18 +14,30 @@ libraries as needed.
 
 ## The look
 
-- The whole frame is a fine grid of coloured characters: at least 240 columns across a 1920-pixel-wide window, more on
-  higher settings. Characters carry colour (and may carry a tinted background), so the picture has real colour, light and
-  shade, not green-on-black.
+- **A real 3D world, drawn as characters.** The world is a true 3D scene (terrain with height, real models for the player,
+  enemies, trees, buildings and props, real perspective from the overhead camera), rendered and then turned into a very fine
+  grid of coloured characters, so every frame has true depth, perspective, shading and reflections, and is still plainly made
+  of characters. Not a flat tile map.
+- **Very dense.** Characters are tiny: around 6 to 8 pixels tall, which is 300 or more columns across a 1920-pixel window at
+  the default setting (higher settings go denser). From a little way back it reads almost like a painting; close up it is
+  unmistakably characters. Characters carry colour (and may carry a tinted background), so the picture has real colour,
+  light and shade, not green-on-black.
+- **Grass as a field of fine strokes.** Meadows are thousands of individual grass blades drawn as thin character strokes
+  (`/ | \ ' ,` and the like), each swaying with the wind and bending away as the player, enemies and attacks pass through,
+  scattered with small flowers (`o * .`) and drifting motes.
+- **Water you can see the world in.** Still water shows a real, rippling reflection of the player, enemies, trees and
+  buildings above it; anything that touches water sends rings of ripples spreading out, drawn as rings of characters.
+- Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered
+  glyphs for tree canopies, fine strokes for grass, flowing marks for water.
 - Materials read through the choice of characters as well as colour: grass, leaves, bark, water, stone, wood, cloth, metal,
   bone, flame and fog each have their own character vocabulary, and surfaces show detail (moss on stone, cracks, ripples).
 - Real lighting: torches, bonfires and spells light their surroundings and flicker; shadows; fog and distance fade into
   atmosphere; day-less gloom with moonlight, firelight and the glow of the depths.
 - The player and every enemy are readable silhouettes made of characters, with animation for walking, running, rolling,
   attacking, staggering, blocking and dying, so a player can read an attack coming.
-- The art in `references/art/` sets each place's mood and palette; `references/look-*.png` are rough static mock-ups of the
-  character-grid style and the HUD (health, stamina, flask charges, currency, boss bar). The game should look better than
-  the mock-ups, and moving.
+- The art in `references/art/` sets each place's mood and palette; `references/look-*.png` are rough static mock-ups of
+  colour carried by characters and of the HUD (health, stamina, flask charges, currency, boss bar). They are flat and far
+  coarser than the game should be: the game is a 3D world, much denser, and moving.
 
 ## The camera
 
@@ -35,6 +47,23 @@ libraries as needed.
   in boss arenas and large spaces.
 - Anything between the camera and the player (walls, roofs, tree canopies) fades or turns see-through, so the player is
   never hidden; leaving a building's interior shows its roof again.
+
+## The world's myths and travel
+
+- **Mythical**: this is a world of old gods, curses and legends. Mythical creatures (wyrms, revenants, giants, spirits,
+  things from the deep) among the enemies and bosses; relics with legends in their descriptions; shrines to dead or sleeping
+  gods with covenants the player can join for rewards and lore; a story of an ancient wrong, told through places, items and
+  sparse dialogue, with more than one ending decided by the player's choices.
+- **Ships between areas**: the areas on the water (the lake and isle, the grey shore, the ruined city by the water, the
+  fortress gorge) are linked by ships. Docks with a ferryman or captain; boarding a ship and sailing across in real time on
+  open water with waves, wind in the sails and the coast passing by (the player can walk the deck); sometimes ambushed at sea.
+  Routes open as the player finds docks and pays for passage; some are one-way until unlocked.
+- **The Gloaming Fair**: a travelling dark carnival that sets up in the world on a schedule (for example every few in-game
+  nights, announced by lanterns and a barker on the road), with striped tents lit by lanterns, a ringmaster, a fortune teller
+  who reads omens, carnival games of skill that award tickets (a shooting gallery, a strength test, a creature-taming pen, a
+  bell-ringing game), a ticket exchange with unique trinkets, cosmetics and a pet, food stalls, a creaky ride, and its own
+  music. Eerie rather than jolly. It packs up and moves on, and the player can find out when and where it will be next. Its
+  own design and names: not a copy of any existing game's fair.
 
 ## A world that moves
 
@@ -82,6 +111,7 @@ libraries as needed.
   - fog-filled crags and peaks above a sea of mist (`wanderer.jpg`);
   - a fortress on cliffs over a roaring gorge and waterfall (`fortress.jpg`);
   - a ruined classical city by moonlit water (`ruins.jpg`);
+  - the open water between them, crossed by ship;
   - the molten depths below everything, a vast burning hall (`depths.jpg`).
 - **Enemies and bosses**: at least fourteen enemy kinds with their own movesets, including a few mini-bosses; at least five
   major bosses, each in its own arena with a fog-wall-style entrance, a health bar with its name, two or more phases,
@@ -103,6 +133,7 @@ libraries as needed.
 
 ## Done means
 
-The game can be played from character creation through all seven areas and five bosses to the end, with every control and
-system above working, the wind, water and weather visibly alive, the whole world drawn in characters and looking good,
-no errors in the browser console during normal play, and a steady frame rate.
+The game can be played from character creation through all seven areas and five bosses to an ending, sailing between the
+water areas and visiting the Gloaming Fair along the way, with every control and system above working; the world is a 3D
+scene drawn densely in characters that looks good, with the grass, wind, water reflections and weather visibly alive; no
+errors in the browser console during normal play; and a steady frame rate.
