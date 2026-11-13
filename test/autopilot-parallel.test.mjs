@@ -4,7 +4,7 @@ import { readFileSync, existsSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pressure, shapeAttempt, parseUsage } from '../lib/usage.mjs';
 import { pressurePolicy } from '../lib/autopilot.mjs';
-import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS, parseLooseJson, CALL_MINUTES } from '../lib/autopilot.mjs';
+import { readyTasks, addWorktree, dropWorktree, integrate, autopilot, taskWallSec, acceptanceGuard, STANDIN_VERIFY, CHEAP_LADDERS, parseLooseJson, CALL_MINUTES, taskLadder } from '../lib/autopilot.mjs';
 import { pick } from '../lib/routing.mjs';
 import { buildArgs } from '../lib/runner.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
@@ -196,11 +196,12 @@ test('autopilot: the tests the planner commits are the frozen ones, and workers 
 });
 
 test('builders: Haiku codes and Sonnet does UI, each with exactly one step up', () => {
-  for (const t of ['code-simple', 'code-moderate', 'code-complex', 'test-writing', 'docs'])
+  for (const t of ['code-simple', 'code-moderate', 'test-writing', 'docs'])
     assert.deepEqual([0, 1].map((a) => pick(t, a, {}, CHEAP_LADDERS)), ['haiku', 'sonnet'], t);
+  assert.deepEqual([0, 1, 2].map((a) => pick('code-complex', a, {}, CHEAP_LADDERS)), ['haiku', 'sonnet', 'opus'], 'complex code can reach Opus');
   for (const t of ['ui-design', 'visual-polish', 'architecture'])
     assert.deepEqual([0, 1].map((a) => pick(t, a, {}, CHEAP_LADDERS)), ['sonnet', 'opus'], t);
-  assert.ok(Object.values(CHEAP_LADDERS).every((l) => l.length === 2), 'one step up, then back to the planner');
+  assert.ok(Object.entries(CHEAP_LADDERS).every(([t, l]) => l.length === (t === 'code-complex' ? 3 : 2)));
 });
 
 test('autopilot: a planning run that stops before the milestone gets a second, shorter run instead of ending everything', async () => {
@@ -308,4 +309,12 @@ test('a thinking call refused by the usage limit waits for the reset and runs ag
     assert.deepEqual(roles.filter((r) => /review/.test(r)), ['review-limited', 'review'], 'refused once, then the same review ran after the reset');
     assert.ok(!said.some((m) => /review attempt 1 not usable/.test(m)), 'the refusal did not use up a review attempt');
   } finally { delete process.env.FAKE_AP_REVIEW_LIMIT_ONCE; delete process.env.FAKE_AP_PLAN; }
+});
+
+test('builders: the planner can start a task further up the ladder ("builder")', () => {
+  assert.deepEqual(taskLadder({ type: 'code-complex', builder: 'opus' }), ['opus']);
+  assert.deepEqual(taskLadder({ type: 'code-complex', builder: 'sonnet' }), ['sonnet', 'opus']);
+  assert.deepEqual(taskLadder({ type: 'code-moderate', builder: 'opus' }), ['opus'], 'added when the type\'s ladder lacks it');
+  assert.deepEqual(taskLadder({ type: 'code-simple' }), ['haiku', 'sonnet']);
+  assert.deepEqual(taskLadder({ type: 'ui-design', builder: 'haiku' }), ['haiku', 'sonnet', 'opus'], 'a cheaper start keeps the steps above it');
 });
