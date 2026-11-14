@@ -3,14 +3,13 @@
 // now, and anything that looks wrong. It reads the run's files and refreshes itself; it never shows the blind port mapping.
 // Usage: node dashboard.mjs [<work dir>, default ~/emberfall-e13] [--port 3099]
 import http from 'node:http';
-import { existsSync, readFileSync, statSync, readdirSync, createReadStream } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, statSync, readdirSync, createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { addNote, readNotes } from '../../lib/autopilot.mjs';
-// Sending a note needs this key (it is in the links printed at start); viewing does not.
-const KEY = randomBytes(9).toString('base64url');
+
 
 const args = process.argv.slice(2);
 const pi = args.indexOf('--port');
@@ -19,6 +18,11 @@ const PORT = pi >= 0 ? Number(args[pi + 1]) : 3099;
 // it does show logs and commit messages to anyone on that network).
 const LAN = args.includes('--lan');
 const WORK = resolve((args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--port') || join(homedir(), 'emberfall-e13')).replace(/^~/, homedir()));
+// Sending a note needs this key (it is in the links printed at start); viewing does not.
+// It is kept in <work>/.dashboard-key, so a bookmarked link keeps working after the dashboard restarts.
+const KEY = (() => { const f = join(WORK, '.dashboard-key');
+  try { const k = readFileSync(f, 'utf8').trim(); if (k) return k; } catch { /* first start */ }
+  const k = randomBytes(9).toString('base64url'); try { writeFileSync(f, k + '\n', { mode: 0o600 }); } catch { /* no work dir yet */ } return k; })();
 
 const read = (p) => { try { return readFileSync(p, 'utf8'); } catch { return null; } };
 const json = (p) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return null; } };
