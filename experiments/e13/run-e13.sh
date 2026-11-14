@@ -74,7 +74,7 @@ all_ended() { for a in $ARMS; do ended "$a" || return 1; done; return 0; }
 
 launch() { # start any arm that is not running and not finished
   if has autopilot && ! ended autopilot && ! ap_alive; then
-    local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/art/*.jpg | paste -sd, -)
+    local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/*.jpg references/art/*.jpg 2>/dev/null | paste -sd, -)
     if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume); else sub=(start --brief-file BRIEF.md --references "$refs" --hours "$HOURS"); [ "$BUDGET" = none ] || sub+=(--budget-usd "$BUDGET"); fi
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
     say "launched autopilot (${sub[0]})"
