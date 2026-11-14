@@ -1,6 +1,7 @@
 # Gloamreach: brief
 
-Build **Gloamreach**, a dark, punishing, mythical action RPG in the souls-like tradition, seen from a locked overhead camera and played in a desktop browser, where
+Build **Gloamreach**, a dark, punishing, mythical action RPG with souls-like difficulty and MMO-style ability combat, played
+alone or in a co-op party of up to four friends, seen from a locked overhead camera in a desktop browser, where
 **everything on screen is drawn with small text characters**: the ground, grass, trees and their leaves, water, stone walls,
 buildings, fog, fire, the player, the enemies, the bosses and the interface. It must be obvious at a glance that the world is
 made of characters, and it must also look genuinely beautiful: atmospheric, detailed, well lit and alive.
@@ -8,9 +9,10 @@ made of characters, and it must also look genuinely beautiful: atmospheric, deta
 It is an original game: its own world, names, characters, story and art. Do not use names, characters, places, text or
 assets from any existing game.
 
-It runs from a static build (`npm run build` produces a folder any static server can serve; `npm start` builds and serves it),
-in current Chrome and Firefox, at a steady 60 frames per second on an ordinary laptop (never below 30), using npm-installable
-libraries as needed.
+It has two parts: a small game server (Node.js, WebSockets) that runs co-op sessions and keeps saves, and the browser client
+it serves. `npm start` builds the client and starts the server; the game is then played at the address it prints, alone or
+with friends who open the same address. It runs in current Chrome and Firefox at a steady 60 frames per second on an
+ordinary laptop (never below 30), using npm-installable libraries as needed.
 
 ## The look
 
@@ -27,8 +29,10 @@ libraries as needed.
   scattered with small flowers (`o * .`) and drifting motes.
 - **Water you can see the world in.** Still water shows a real, rippling reflection of the player, enemies, trees and
   buildings above it; anything that touches water sends rings of ripples spreading out, drawn as rings of characters.
-- **The look to aim for** is shown in `references/look-target-*.png` (frames from another developer's work in progress, used
-  with permission; credits in `references/art/ART.md`): match that density, depth, grass and water, in Gloamreach's own
+- **The look and play to aim for** is shown in `references/look-target-*.png`: the first four show the world (grass, water,
+  reflections, ripples); `look-target-boss*.png` and `look-target-party.png` show a party fighting a huge creature drawn in
+  characters, with ground telegraphs, a phased boss bar, party frames, nameplates and an ability hotbar. All are frames from another developer's work in progress, used
+  with permission (credits in `references/art/ART.md`): match that density, depth, grass, water, combat readability and HUD, in Gloamreach's own
   world, palette and designs. Do not copy that project's names, characters or content.
 - Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered
   glyphs for tree canopies, fine strokes for grass, flowing marks for water.
@@ -82,29 +86,36 @@ libraries as needed.
 
 ## Play
 
-- **Controls**, the genre's standard layout, rebindable, with a gamepad supported throughout (Gamepad API):
-  - Keyboard and mouse: WASD move (relative to the screen: W is up), the mouse cursor aims (the character turns to face it when
-    attacking, blocking, casting and shooting), Space tapped rolls / dodges in the movement direction and held sprints, left mouse light
-    attack, Shift + left mouse heavy attack, right mouse block (hold), Ctrl parry (with a shield or parrying tool), Q lock on
-    to a target, which then sets the facing instead of the cursor (mouse wheel or Q again switches target), E interact (doors, levers, items, checkpoints), R use the equipped
-    item (the healing flask by default), 1-4 switch right weapon / left hand / item / spell, F two-hand the weapon, Esc menu.
-  - Gamepad: left stick move, right stick aims (facing), right shoulder light attack, right trigger heavy, left shoulder block,
-    left trigger parry, face buttons roll/sprint, interact, use item and two-hand, right stick click lock-on, d-pad to switch.
-- **Combat**, deliberate and punishing, as the genre is known for: a stamina bar that every attack, roll, block and sprint
-  drains; rolls with invincibility frames and a recovery; poise and stagger; backstabs and ripostes after a parry; weight
-  (equipment load) that changes roll speed; attacks that commit the player to their animation; enemies that hit hard,
-  punish greed, fight in groups and use the terrain. No difficulty setting. Hard but fair: every attack is readable and
-  avoidable, and deaths should feel like the player's mistake.
-- **Death and recovery**: dying returns the player to the last checkpoint with the currency they carried left where they
-  fell, recoverable only by reaching it without dying again. An original death message, not one from another game.
+- **Controls**, rebindable, with a gamepad supported throughout (Gamepad API):
+  - Keyboard and mouse: WASD move (relative to the screen: W is up); the mouse cursor aims ground-targeted and directional
+    abilities and shows a crosshair; left click selects a target (Tab cycles nearby enemies, F1-F4 select party members);
+    **1 to 0 use the ten abilities on the hotbar**; Space dodges in the movement direction (with brief invulnerability and a
+    cooldown); Shift sprints; E interacts (doors, levers, items, checkpoints, docks); R drinks the healing flask; Esc menu.
+  - Gamepad: left stick move, right stick aims, face buttons and shoulders for the hotbar (with a modifier for the second
+    half), a button to dodge, d-pad to cycle targets.
+- **Combat**, ability-based, as in MMO games, and punishing, as the souls-likes are:
+  - Each class has a hotbar of abilities unlocked as it levels (at least ten per class): instant strikes, cast-time spells
+    with a visible cast bar that moving or being hit can interrupt, channels, ground-targeted areas, heals, shields, buffs,
+    crowd control, and an ultimate, each with a cooldown and a resource (health plus mana, rage or focus by class), and a
+    global cooldown between abilities.
+  - Party roles: classes lean towards tanking, healing or dealing damage; enemies have threat, so a tank can hold their
+    attention; a healer keeps the party alive; a party plays very differently from one player alone.
+  - Deadly, readable attacks: enemies and bosses telegraph big attacks on the ground (dotted circles, cones, lines and rings
+    of characters that fill as the strike approaches), and standing in them hurts or kills. Every attack is readable and
+    avoidable; deaths should feel like the player's mistake. Enemies hit hard, fight in groups and use the terrain. No
+    difficulty setting; enemy health and damage scale with the number of players in the party.
+- **Death and recovery**: in a party, a fallen player can be revived by another (a short channel next to them) or release
+  to the last checkpoint; alone, or when the whole party falls, the player returns to the last checkpoint with the currency
+  they carried left where they fell, recoverable only by reaching it without dying again. An original death message, not
+  one from another game.
 - **Checkpoints**: resting at one heals the player, refills the healing flask (limited charges, upgradable), respawns ordinary
   enemies, and is where the player levels up. Checkpoints can be travelled between once enough are found.
-- **Character**: a class choice at the start (at least four), levelling by spending the currency on attributes (at least
-  six: vitality, endurance, strength, dexterity, attunement for spells, faith or intelligence for scaling), equipment
-  load, and stat scaling on weapons.
-- **Gear**: at least ten weapons with distinct movesets (straight sword, greatsword, dagger, spear, axe, hammer, curved
-  sword, halberd, bow, catalyst for spells), shields, at least five armour sets, rings with effects, upgrades with materials
-  at a blacksmith, and at least eight spells or miracles.
+- **Character**: a class choice at the start (at least four, covering tank, healer and damage roles between them), levels
+  that unlock abilities and raise attributes (at least six), and talents or attribute points to spend so two characters of
+  one class can play differently.
+- **Gear**: weapons, off-hands and armour with stats and rarities that change how abilities perform and how the character
+  looks, at least ten weapon kinds, at least five armour sets per armour type, rings and trinkets with effects, upgrades with
+  materials at a blacksmith, and loot dropped by enemies and bosses (shared fairly in a party).
 - **The world**: one interconnected world, not levels: at least seven areas that loop back on themselves with locked doors,
   shortcuts opened from the far side, ladders, lifts and secrets (illusory walls, hidden paths). Each area takes its mood
   from a painting in `references/art/`:
@@ -116,27 +127,44 @@ libraries as needed.
   - a ruined classical city by moonlit water (`ruins.jpg`);
   - the open water between them, crossed by ship;
   - the molten depths below everything, a vast burning hall (`depths.jpg`).
-- **Enemies and bosses**: at least fourteen enemy kinds with their own movesets, including a few mini-bosses; at least five
-  major bosses, each in its own arena with a fog-wall-style entrance, a health bar with its name, two or more phases,
-  telegraphed attack patterns to learn, and a reward. A final boss ends the game; reaching it should take hours for a first
+- **Enemies and bosses**: at least fourteen enemy kinds with their own abilities, including a few mini-bosses; at least five
+  major bosses, huge creatures drawn in characters (a dragon among them), each in its own arena with a fog-wall-style
+  entrance, a health bar along the top with its name and current phase ("phase 2"), three or more phases that change its
+  attacks, ground telegraphs to learn, and a reward. A final boss ends the game; reaching it should take hours for a first
   player.
 - **People and story**: at least six non-player characters with dialogue, some with small quest lines; a merchant and a
   blacksmith; the story told mostly through item descriptions, places and sparse dialogue.
 
+## Playing with friends
+
+- **Co-op parties of up to four**: one player hosts their world and friends join from the same address with a short invite
+  code; everyone sees the same world, enemies and bosses in real time, with the server as the authority for positions,
+  health, damage and loot (it rejects impossible moves and cooldowns). Joining and leaving mid-session works without breaking
+  the host's world.
+- **The party in view**: names above every player's head; party frames on the left (each member's portrait drawn in
+  characters, health, resource, level, and greyed out when down); party chat and quick pings on the ground; the target frame
+  shows the target's target.
+- **Progress**: each player keeps their own character, level and gear; bosses and story progress belong to the host's world,
+  with rewards for everyone who took part.
+- Alone, the whole game is playable with no one else connected.
+
 ## Everything around the play
 
-- Title screen (new game, continue, settings, credits), character creation with a character-drawn preview, pause menu,
+- Title screen (new game, continue, join a friend, settings, credits), character creation with a character-drawn preview, pause menu,
   inventory and equipment screens, level-up screen, map of found checkpoints, item descriptions.
 - Settings: graphics (character density / resolution, effects quality, view distance), camera zoom level,
   key bindings and gamepad bindings, audio volumes (master, music, effects), reduced camera shake. Settings persist.
-- Saving: the game saves continuously (position, inventory, flags, opened shortcuts, bosses beaten) and continues after a
-  reload. Several save slots.
+- Saving: the game saves continuously (position, inventory, flags, opened shortcuts, bosses beaten) on the server, and
+  continues after a reload or a server restart. Several save slots.
+- HUD: player and target frames, party frames, the ability hotbar (1 to 0) with cooldown sweeps, cast bars, a boss bar along
+  the top with name and phase, floating damage numbers, and the minimap.
 - Sound: footsteps by surface, weapon swings and impacts, wind, rain, water, fire, enemy sounds, boss music; generated with
   the Web Audio API if there are no audio files.
 
 ## Done means
 
-The game can be played from character creation through all seven areas and five bosses to an ending, sailing between the
-water areas and visiting the Gloaming Fair along the way, with every control and system above working; the world is a 3D
+The game can be played from character creation through all seven areas and five bosses to an ending, alone and as a party
+of up to four in separate browser tabs, sailing between the water areas and visiting the Gloaming Fair along the way, with
+every control and system above working; the world is a 3D
 scene drawn densely in characters that looks good, with the grass, wind, water reflections and weather visibly alive; no
 errors in the browser console during normal play; and a steady frame rate.

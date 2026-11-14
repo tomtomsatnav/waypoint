@@ -23,12 +23,16 @@ for p in $PORTS; do
   git -C "$WORK/$a" archive HEAD | tar -x -C "$d"           # committed code only: no history, no autopilot state
   ( cd "$d" && npm install --no-audit --no-fund > "$WORK/blind/$p.install.log" 2>&1
     node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)" 2>/dev/null && npm run build >> "$WORK/blind/$p.install.log" 2>&1
-    # A static build (dist/index.html) is served as it is, on this port: start scripts such as "vite preview" ignore PORT
-    # (E14b's game tried port 4173 and failed). Anything else (a game with its own server) gets PORT and npm start.
-    if [ -f dist/index.html ]; then nohup node "$HERE/static-serve.mjs" dist "$p" > "$WORK/blind/$p.log" 2>&1 < /dev/null &
-    else PORT=$p nohup npm start > "$WORK/blind/$p.log" 2>&1 < /dev/null & fi )
+    # The game's own start first (with PORT): a game with a server needs it. If nothing answers on this port and there is a
+    # static build, serve that instead (E14b's "vite preview" ignored PORT and failed on 4173).
+    PORT=$p nohup npm start > "$WORK/blind/$p.log" 2>&1 < /dev/null &
+    for i in $(seq 1 30); do curl -s -o /dev/null "http://127.0.0.1:$p/" && exit 0; sleep 1; done
+    if [ -f dist/index.html ]; then
+      for pid in $(pgrep -f "$d" 2>/dev/null); do kill "$pid" 2>/dev/null; done
+      nohup node "$HERE/static-serve.mjs" dist "$p" >> "$WORK/blind/$p.log" 2>&1 < /dev/null &
+    fi ) &
 done
-sleep 25
+wait; sleep 3
 for p in $PORTS; do
   code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$p/")
   if [ "$code" = 200 ]; then echo "port $p: up  http://localhost:$p"

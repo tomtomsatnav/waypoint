@@ -28,5 +28,12 @@ dreams", used here with the creator's permission as references for the look only
 | look-target-grass.png | grass as thousands of fine character strokes with small flowers, and the player model drawn in characters |
 | look-target-reflection.png | the player and the world reflected in still water |
 
+| look-target-boss.png | a party fighting a huge dragon drawn in characters, with the boss bar along the top |
+| look-target-boss-telegraphs.png | the dragon's attack telegraphed as dotted circles on the ground, party nameplates, the hotbar |
+| look-target-party.png | party frames on the left (portrait, health, mana, level), the 1-0 ability hotbar, nameplates |
+| look-target-boss-phase.png | the boss bar naming the current phase, a fallen party member greyed out, rain over dark grass |
+
+The last four come from a second video by the same creator, "Party with friends", also used with permission.
+
 They show the technique and the feel to aim for. Do not copy that project's names, characters, designs or content:
 Gloamreach is its own game.
