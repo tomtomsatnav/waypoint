@@ -19,7 +19,7 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   for the player, enemies, trees, buildings and props, real perspective from the overhead camera), rendered at a low
   internal resolution and shown with crisp, square pixels and a limited, painterly palette, so every frame has true depth,
   light and motion and still reads as hand-made pixel art. Not a flat tile map, and not smooth modern 3D.
-- **The style to match** is shown in `references/style-*.jpg` (50 frames from seven videos by another developer, used with
+- **The style to match** is shown in `references/style-*.jpg` (200 frames from seven videos by another developer, used with
   permission; credits in `references/art/ART.md`; read a good spread of them): rich autumn forests in golds, rusts and deep
   greens; moody blue-grey night scenes; warm desert light; soft limited-colour shading with gentle dithering; light
   through leaves; a moving cape; footprints and shifting sand under the feet; fog that swirls and parts around the player;

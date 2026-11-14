@@ -49,9 +49,10 @@ Gloamreach is its own game.
 
 ## Art style (used with permission)
 
-`../style-*.jpg` (50 frames) are from seven work-in-progress videos by **@thirteen_autumns** (Instagram), used here with the
-creator's permission as the reference for Gloamreach's art style: pixel art rendered from a 3D world. One frame every two
-seconds, near-duplicates and end cards removed:
+`../style-*.jpg` (200 frames) are from seven work-in-progress videos by **@thirteen_autumns** (Instagram), used here with the
+creator's permission as the reference for Gloamreach's art style: pixel art rendered from a 3D world. Two frames a second,
+near-duplicates and end cards removed, in order, so consecutive frames also show how things move (the cape, the fog, the
+sand, the ripples):
 
 | Files | Video | Shows |
 |---|---|---|
