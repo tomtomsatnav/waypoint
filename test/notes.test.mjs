@@ -55,3 +55,24 @@ test('notes: an urgent note interrupts the milestone and gets a review before th
   assert.equal(st.milestones[0].status, 'interrupted-by-owner');
   assert.equal(readNotes(repo)[0].reviewed.milestone, 1);
 });
+
+test('a revised brief on resume replaces the old one and becomes an urgent note to re-plan', async () => {
+  const { repo, log } = setup();
+  const first = await autopilot({ repo, brief: 'old brief: ASCII', deadlineHours: 1, research: false, claude: FAKE, log: () => {} });
+  assert.equal(first.finished, 'shipped');
+  // A shipped run that is resumed with a new brief and new references takes them and re-plans.
+  const { loadAp } = await import('../lib/autopilot.mjs');
+  const st0 = loadAp(repo); st0.finished = null; st0.shipped = false;
+  const { writeJsonAtomic } = await import('../lib/state.mjs');
+  writeJsonAtomic(join(repo, '.git', 'autopilot', 'state.json'), st0);
+  const said = [];
+  const st = await autopilot({ repo, brief: 'new brief: pixel art', references: ['references/style-pond-01.jpg'], deadlineHours: 1, research: false, claude: FAKE, log: (m) => said.push(m) });
+  assert.equal(st.brief, 'new brief: pixel art');
+  assert.equal(st.briefChanges[0].previous, 'old brief: ASCII');
+  assert.deepEqual(st.references, ['references/style-pond-01.jpg']);
+  assert.ok(said.some((m) => /the brief changed/.test(m)));
+  const note = readNotes(repo).find((n) => /revised the brief/.test(n.text));
+  assert.equal(note.urgent, true);
+  assert.equal(note.reviewed.milestone, 1, 'folded in by the next review');
+  assert.match(readFileSync(log + '.review-prompts', 'utf8'), /new brief: pixel art[\s\S]*revised the brief/);
+});

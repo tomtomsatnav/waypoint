@@ -46,3 +46,21 @@ revive, in order.
 
 They show the technique and the feel to aim for. Do not copy that project's names, characters, designs or content:
 Gloamreach is its own game.
+
+## Art style (used with permission)
+
+`../style-*.jpg` (50 frames) are from seven work-in-progress videos by **@thirteen_autumns** (Instagram), used here with the
+creator's permission as the reference for Gloamreach's art style: pixel art rendered from a 3D world. One frame every two
+seconds, near-duplicates and end cards removed:
+
+| Files | Video | Shows |
+|---|---|---|
+| style-explore-* | "Just us, exploring the world together" | autumn forest, cliffs and stairs, a coast, two players |
+| style-cape-orb-* | "Really happy with how the cape moves now" | cape motion, a moody blue-grey scene with a giant orb |
+| style-sand-* | "the sand softly shifting beneath your feet" | footprints in warm desert sand at sunset |
+| style-night-* | "new personal best" | a dark night scene |
+| style-fog-* | "the fog gently swirls around you as you walk through it" | fog parting around the player in ruins |
+| style-pond-* | "a little forest pond and about a thousand tiny details" | ripples, lily pads, fireflies, dense foliage |
+| style-trees-* | "making trees feel massive without blocking everything" | huge trees turning see-through over the player |
+
+They show the style to aim for. Do not copy that project's names, characters, designs or content.

@@ -1,10 +1,9 @@
 # Gloamreach: brief
 
 Build **Gloamreach**, a dark, punishing, mythical action RPG with souls-like difficulty and MMO-style ability combat, played
-alone or in a co-op party of up to four friends, seen from a locked overhead camera in a desktop browser, where
-**everything on screen is drawn with small text characters**: the ground, grass, trees and their leaves, water, stone walls,
-buildings, fog, fire, the player, the enemies, the bosses and the interface. It must be obvious at a glance that the world is
-made of characters, and it must also look genuinely beautiful: atmospheric, detailed, well lit and alive.
+alone or in a co-op party of up to four friends, seen from a locked overhead camera in a desktop browser, in a **pixel-art
+style rendered from a real 3D world**: crisp pixels, a limited painterly palette and a thousand small living details. It
+must look genuinely beautiful: atmospheric, detailed, well lit and alive.
 
 It is an original game: its own world, names, characters, story and art. Do not use names, characters, places, text or
 assets from any existing game.
@@ -16,41 +15,38 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
 
 ## The look
 
-- **A real 3D world, drawn as characters.** The world is a true 3D scene (terrain with height, real models for the player,
-  enemies, trees, buildings and props, real perspective from the overhead camera), rendered and then turned into a very fine
-  grid of coloured characters, so every frame has true depth, perspective, shading and reflections, and is still plainly made
-  of characters. Not a flat tile map.
-- **Very dense.** Characters are tiny: around 6 to 8 pixels tall, which is 300 or more columns across a 1920-pixel window at
-  the default setting (higher settings go denser). From a little way back it reads almost like a painting; close up it is
-  unmistakably characters. Characters carry colour (and may carry a tinted background), so the picture has real colour,
-  light and shade, not green-on-black.
-- **Grass as a field of fine strokes.** Meadows are thousands of individual grass blades drawn as thin character strokes
-  (`/ | \ ' ,` and the like), each swaying with the wind and bending away as the player, enemies and attacks pass through,
-  scattered with small flowers (`o * .`) and drifting motes.
-- **Water you can see the world in.** Still water shows a real, rippling reflection of the player, enemies, trees and
-  buildings above it; anything that touches water sends rings of ripples spreading out, drawn as rings of characters.
-- **The look and play to aim for** is shown in `references/look-target-*` (50 frames; read a good spread of them, not just
-  the first): `look-target-v1-*.jpg` and the first four `.png` show the world (grass, water, reflections, ripples, a castle by
-  a lake); `look-target-v2-*.jpg` and the other `.png` follow a party through a whole dragon fight drawn in characters (fire
-  breath, lightning, ground telegraphs as dotted circles and rings, a phased boss bar, party frames, nameplates, an ability
-  hotbar, death and reviving), in order, so they show how the fight moves as well as how it looks; `look-target-v3-*.jpg` show a
-  giant furry spider close up, how much texture and detail a creature can carry in characters, and a fight against it.
+- **Pixel art from a real 3D world.** The world is a true 3D scene (terrain with height, real rigged and animated models
+  for the player, enemies, trees, buildings and props, real perspective from the overhead camera), rendered at a low
+  internal resolution and shown with crisp, square pixels and a limited, painterly palette, so every frame has true depth,
+  light and motion and still reads as hand-made pixel art. Not a flat tile map, and not smooth modern 3D.
+- **The style to match** is shown in `references/style-*.jpg` (50 frames from seven videos by another developer, used with
+  permission; credits in `references/art/ART.md`; read a good spread of them): rich autumn forests in golds, rusts and deep
+  greens; moody blue-grey night scenes; warm desert light; soft limited-colour shading with gentle dithering; light
+  through leaves; a moving cape; footprints and shifting sand under the feet; fog that swirls and parts around the player;
+  a forest pond full of tiny details (lily pads, ripples, fireflies); huge trees that turn see-through over the player
+  instead of hiding them. Match that pixel density, palette discipline, lighting and density of small details, in
+  Gloamreach's own world, palette and designs; do not copy that project's names, characters or content.
+- **Pixel density**: one game pixel is about 3 to 4 screen pixels at the default setting (around 480 to 640 game pixels
+  across a 1920-pixel window), integer-scaled with no blurring; the palette is limited per area (around 24 to 48 colours,
+  chosen to fit each area's painting), with ordered dithering for gradients, fog and light.
+- **Small living details everywhere**: grass and leaves that sway with the wind and bend as people pass, footprints that
+  stay a while in sand, snow and mud, ripples and rings in water when anything touches it, fireflies, falling leaves,
+  drifting motes, dust when landing, cloth and capes that move with movement and wind.
+- **Water you can see the world in**: still water shows a rippling reflection of the player, enemies, trees and buildings,
+  with lily pads and reeds; anything that touches it sends rings spreading out.
 - **Monsters with glowing eyes**: hostile creatures have red (or otherwise eerie) glowing eyes that stay bright in the
-  dark, and as they move the glow leaves a short fading red afterglow trail behind them, so a pack moving through the
-  gloom reads as streaks of red light. All are frames from another developer's work in progress, used
-  with permission (credits in `references/art/ART.md`): match that density, depth, grass, water, combat readability and HUD, in Gloamreach's own
-  world, palette and designs. Do not copy that project's names, characters or content.
-- Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered
-  glyphs for tree canopies, fine strokes for grass, flowing marks for water.
-- Materials read through the choice of characters as well as colour: grass, leaves, bark, water, stone, wood, cloth, metal,
-  bone, flame and fog each have their own character vocabulary, and surfaces show detail (moss on stone, cracks, ripples).
-- Real lighting: torches, bonfires and spells light their surroundings and flicker; shadows; fog and distance fade into
-  atmosphere; day-less gloom with moonlight, firelight and the glow of the depths.
-- The player and every enemy are readable silhouettes made of characters, with animation for walking, running, rolling,
-  attacking, staggering, blocking and dying, so a player can read an attack coming.
-- The art in `references/art/` sets each place's mood and palette; `references/look-*.png` are rough static mock-ups of
-  colour carried by characters and of the HUD (health, stamina, flask charges, currency, boss bar). They are flat and far
-  coarser than the game should be: the game is a 3D world, much denser, and moving.
+  dark, and as they move the glow leaves a short fading afterglow trail behind them, so a pack moving through the gloom
+  reads as streaks of red light.
+- Real lighting: torches, bonfires and spells light their surroundings and flicker; soft shadows; fog and distance fade
+  into atmosphere; moonlight, firelight and the glow of the depths; light through canopies.
+- The player and every enemy are readable silhouettes with animation for walking, running, dodging, casting, attacking,
+  staggering, blocking and dying, so a player can read an attack coming.
+- **For play, not look**: `references/look-target-*` (frames from a different developer's character-drawn game, also used
+  with permission) show how a party fight should play and read: a huge dragon and a giant spider with phased boss bars,
+  ground telegraphs as circles, cones and rings, party frames, nameplates, the ability hotbar, death and reviving. Take the
+  readability, HUD layout, telegraphs and creature scale from them, not their character-drawn rendering.
+- The paintings in `references/art/` set each place's mood and palette; `references/look-*.png` are older static mock-ups
+  of the HUD (health, resource, flask charges, currency, boss bar), useful for layout only.
 
 ## The camera
 
@@ -107,7 +103,7 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   - Party roles: classes lean towards tanking, healing or dealing damage; enemies have threat, so a tank can hold their
     attention; a healer keeps the party alive; a party plays very differently from one player alone.
   - Deadly, readable attacks: enemies and bosses telegraph big attacks on the ground (dotted circles, cones, lines and rings
-    of characters that fill as the strike approaches), and standing in them hurts or kills. Every attack is readable and
+    of light that fill as the strike approaches), and standing in them hurts or kills. Every attack is readable and
     avoidable; deaths should feel like the player's mistake. Enemies hit hard, fight in groups and use the terrain. No
     difficulty setting; enemy health and damage scale with the number of players in the party.
 - **Death and recovery**: in a party, a fallen player can be revived by another (a short channel next to them) or release
@@ -134,7 +130,7 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   - the open water between them, crossed by ship;
   - the molten depths below everything, a vast burning hall (`depths.jpg`).
 - **Enemies and bosses**: at least fourteen enemy kinds with their own abilities, including a few mini-bosses; at least five
-  major bosses, huge creatures drawn in characters (a dragon among them), each in its own arena with a fog-wall-style
+  major bosses, huge creatures (a dragon and a giant spider among them), each in its own arena with a fog-wall-style
   entrance, a health bar along the top with its name and current phase ("phase 2"), three or more phases that change its
   attacks, ground telegraphs to learn, and a reward. A final boss ends the game; reaching it should take hours for a first
   player.
@@ -147,8 +143,7 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   code; everyone sees the same world, enemies and bosses in real time, with the server as the authority for positions,
   health, damage and loot (it rejects impossible moves and cooldowns). Joining and leaving mid-session works without breaking
   the host's world.
-- **The party in view**: names above every player's head; party frames on the left (each member's portrait drawn in
-  characters, health, resource, level, and greyed out when down); party chat and quick pings on the ground; the target frame
+- **The party in view**: names above every player's head; party frames on the left (each member's pixel-art portrait, health, resource, level, and greyed out when down); party chat and quick pings on the ground; the target frame
   shows the target's target.
 - **Progress**: each player keeps their own character, level and gear; bosses and story progress belong to the host's world,
   with rewards for everyone who took part.
@@ -156,9 +151,9 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
 
 ## Everything around the play
 
-- Title screen (new game, continue, join a friend, settings, credits), character creation with a character-drawn preview, pause menu,
+- Title screen (new game, continue, join a friend, settings, credits), character creation with a live preview of the character, pause menu,
   inventory and equipment screens, level-up screen, map of found checkpoints, item descriptions.
-- Settings: graphics (character density / resolution, effects quality, view distance), camera zoom level,
+- Settings: graphics (pixel scale / resolution, effects quality, view distance), camera zoom level,
   key bindings and gamepad bindings, audio volumes (master, music, effects), reduced camera shake. Settings persist.
 - Saving: the game saves continuously (position, inventory, flags, opened shortcuts, bosses beaten) on the server, and
   continues after a reload or a server restart. Several save slots.
@@ -172,5 +167,5 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
 The game can be played from character creation through all seven areas and five bosses to an ending, alone and as a party
 of up to four in separate browser tabs, sailing between the water areas and visiting the Gloaming Fair along the way, with
 every control and system above working; the world is a 3D
-scene drawn densely in characters that looks good, with the grass, wind, water reflections and weather visibly alive; no
+scene rendered as pixel art that matches the style references, with the grass, wind, water reflections and weather visibly alive; no
 errors in the browser console during normal play; and a steady frame rate.
