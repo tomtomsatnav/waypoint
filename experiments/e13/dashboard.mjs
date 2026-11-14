@@ -169,6 +169,13 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .brief{white-space:pre-wrap;max-height:480px;overflow:auto;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:8px}
 .prompt{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;white-space:pre-wrap}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.car{margin-top:10px;max-width:900px}.car-stage{position:relative;background:#0b0d11;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;touch-action:pan-y}
+.car-stage img{max-width:100%;max-height:70vh;display:block;cursor:zoom-in;user-select:none;-webkit-user-drag:none}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(15,17,21,.75);color:var(--text);font-size:24px;line-height:38px;text-align:center;cursor:pointer}
+.car-btn.prev{left:10px}.car-btn.next{right:10px}.car-btn:hover{background:rgba(40,44,54,.9)}
+.car-meta{display:flex;gap:10px;align-items:baseline;margin:6px 2px}.car-count{color:var(--dim);font-variant-numeric:tabular-nums}
+.car-thumbs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px}.car-thumbs img{height:56px;border-radius:4px;border:2px solid transparent;opacity:.6;cursor:pointer;flex:none}
+.car-thumbs img.on{border-color:var(--accent);opacity:1}
 .gallery a{display:block;color:var(--dim);font-size:12px;text-decoration:none}.gallery img{width:100%;border-radius:6px;border:1px solid var(--line);display:block;margin-bottom:4px}
 .reply{margin:4px 0 0 18px;color:var(--text)}
 .task{display:flex;gap:8px;align-items:baseline;padding:2px 0}.t-done{color:var(--good)}.t-stuck{color:var(--bad)}.t-retry{color:var(--warn)}.t-pending{color:var(--dim)}
@@ -205,15 +212,31 @@ function arm(a){let h='<div class="panel"><h2>'+esc(a.name)+' '+pill(a.state)+'<
  h+='<details open><summary>Latest commits</summary><ul>'+a.commits.map(c=>'<li><span class="dim">'+ago(c.at)+'</span> '+esc(c.subject)+'</li>').join('')+'</ul></details>';
  h+='<details><summary>Log</summary><div class="log mono">'+a.log.map(esc).join('\\n')+'</div></details></div>';return h}
 let briefShown=null;
+// Carousels: one image at a time, arrows, swipe, arrow keys, a thumbnail strip; the position survives the 30 s refresh.
+const CAR={};let carLast=null;
+function car(id,imgs){const c=CAR[id]||(CAR[id]={i:0});c.imgs=imgs;if(c.i>=imgs.length)c.i=imgs.length-1;const i=c.i,im=imgs[i];
+ return '<div class="car" data-car="'+esc(id)+'"><div class="car-stage"><img class="car-main" src="'+im.src+'" alt="">'+(imgs.length>1?'<button class="car-btn prev" data-go="-1" aria-label="previous">‹</button><button class="car-btn next" data-go="1" aria-label="next">›</button>':'')+'</div>'
+ +'<div class="car-meta"><span class="car-count">'+(i+1)+' / '+imgs.length+'</span><span class="car-cap">'+esc(im.caption)+'</span></div>'
+ +(imgs.length>1?'<div class="car-thumbs">'+imgs.map((x,k)=>'<img loading="lazy" data-to="'+k+'" class="'+(k===i?'on':'')+'" src="'+x.src+'">').join('')+'</div>':'')+'</div>';}
+function carShow(el,i){const id=el.dataset.car,c=CAR[id];if(!c)return;const n=c.imgs.length;c.i=((i%n)+n)%n;carLast=id;const im=c.imgs[c.i];
+ el.querySelector('.car-main').src=im.src;el.querySelector('.car-count').textContent=(c.i+1)+' / '+n;el.querySelector('.car-cap').textContent=im.caption;
+ el.querySelectorAll('.car-thumbs img').forEach((t,k)=>{t.classList.toggle('on',k===c.i);if(k===c.i)t.scrollIntoView({block:'nearest',inline:'nearest'});});}
+document.addEventListener('click',(e)=>{const el=e.target.closest('.car');if(!el)return;const c=CAR[el.dataset.car];carLast=el.dataset.car;
+ if(e.target.dataset.go)carShow(el,c.i+Number(e.target.dataset.go));else if(e.target.dataset.to)carShow(el,Number(e.target.dataset.to));else if(e.target.classList.contains('car-main'))window.open(c.imgs[c.i].src,'_blank');});
+document.addEventListener('keydown',(e)=>{if(!carLast||/textarea|input/i.test(e.target.tagName))return;const el=document.querySelector('.car[data-car="'+CSS.escape(carLast)+'"]');if(!el)return;
+ if(e.key==='ArrowRight')carShow(el,CAR[carLast].i+1);if(e.key==='ArrowLeft')carShow(el,CAR[carLast].i-1);});
+let carX=null;document.addEventListener('touchstart',(e)=>{if(e.target.closest('.car-stage'))carX=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',(e)=>{const el=e.target.closest('.car');if(carX==null||!el)return;const dx=e.changedTouches[0].clientX-carX;carX=null;if(Math.abs(dx)>40)carShow(el,CAR[el.dataset.car].i+(dx<0?1:-1));},{passive:true});
 const KEY=new URLSearchParams(location.search).get('key');
 if(!KEY)document.getElementById('notebox').innerHTML='<h2>Send a note to the autopilot</h2><div class="dim">Open the link with <code>?key=</code> that the dashboard printed in Terminal to send notes from here.</div><div id="notes" style="margin-top:10px"></div>';
 else document.getElementById('send').onclick=async()=>{const t=document.getElementById('note').value.trim();if(!t)return;
  const r=await fetch('/note?key='+encodeURIComponent(KEY),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,urgent:document.getElementById('urgent').checked})});
  document.getElementById('sent').textContent=r.ok?'sent':'not sent: '+(await r.text());if(r.ok){document.getElementById('note').value='';tick();}};
 async function tick(){try{const s=await (await fetch('/api')).json();
- const gal=(imgs)=>'<div class="gallery">'+imgs.map(i=>'<a href="'+i.src+'" target="_blank"><img loading="lazy" src="'+i.src+'">'+esc(i.caption)+'</a>').join('')+'</div>';
- document.getElementById('notes').innerHTML=(s.notes||[]).map(n=>'<div style="margin-bottom:10px"><div class="task"><span class="'+(n.reviewed?'t-done':n.urgent?'t-retry':'t-pending')+'">●</span><span>'+esc(n.text)+' <span class="dim">'+esc(n.at.slice(11,16))+' · '+(n.reviewed?'folded into the plan (milestone '+n.reviewed.milestone+' review)':n.urgent?'urgent, waiting for the review':'waiting for the next review')+'</span></span></div>'+(n.reply?'<div class="reply">↳ '+esc(n.reply)+'</div>':'')+(n.images&&n.images.length?gal(n.images):'')+'</div>').join('');
- if(s.shots&&s.shots.images.length){document.getElementById('shotsbox').style.display='';document.getElementById('shotstitle').textContent='Latest screenshots ('+s.shots.milestone.replace('-tester','').replace('m','milestone ')+', taken by the tester)';const h=gal(s.shots.images);if(document.getElementById('shots').dataset.h!==h){document.getElementById('shots').innerHTML=h;document.getElementById('shots').dataset.h=h;}}
+ const gal=(imgs,id)=>car(id,imgs);
+ const nh=(s.notes||[]).map(n=>'<div style="margin-bottom:10px"><div class="task"><span class="'+(n.reviewed?'t-done':n.urgent?'t-retry':'t-pending')+'">●</span><span>'+esc(n.text)+' <span class="dim">'+esc(n.at.slice(11,16))+' · '+(n.reviewed?'folded into the plan (milestone '+n.reviewed.milestone+' review)':n.urgent?'urgent, waiting for the review':'waiting for the next review')+'</span></span></div>'+(n.reply?'<div class="reply">↳ '+esc(n.reply)+'</div>':'')+(n.images&&n.images.length?gal(n.images,n.id):'')+'</div>').join('');
+ const ne=document.getElementById('notes');if(ne.dataset.h!==nh){ne.innerHTML=nh;ne.dataset.h=nh;}
+ if(s.shots&&s.shots.images.length){document.getElementById('shotsbox').style.display='';document.getElementById('shotstitle').textContent='Latest screenshots ('+s.shots.milestone.replace('-tester','').replace('m','milestone ')+', taken by the tester)';const h=gal(s.shots.images,'shots');if(document.getElementById('shots').dataset.h!==h){document.getElementById('shots').innerHTML=h;document.getElementById('shots').dataset.h=h;}}
  if(s.brief&&s.brief!==briefShown){briefShown=s.brief;const t=(s.brief.match(/^#\\s*(.+)$/m)||[])[1]||'Brief';const lead=(s.brief.split('\\n').find(l=>l.trim()&&!l.startsWith('#'))||'');
   document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead.split('**').join(''))+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
  if(!s.brief)document.getElementById('brief').style.display='none';
