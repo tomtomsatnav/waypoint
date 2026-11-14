@@ -40,3 +40,9 @@ blind on ports 3101 and 3102 with a notification; give a verdict before
 `E13_WORK=~/gloamreach-e14 ~/waypoint/experiments/e13/run-e13.sh reveal`.
 
 The researched arm will probably end within a few hours (one session stops by itself); the autopilot may run for days.
+
+## Pushing the game to GitHub
+
+If an arm's repo has a remote called `origin`, the supervisor pushes it to `main` every five minutes and once more when the
+run ends (log: `<work>/push.log`). Add the remote once (`git -C ~/gloamreach-e14d/autopilot remote add origin <url>`); the
+autopilot's own state stays local, inside `.git`.

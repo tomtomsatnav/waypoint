@@ -89,16 +89,22 @@ launch() { # start any arm that is not running and not finished
   done
 }
 
+push_arms() { # any arm whose repo has a remote "origin" is pushed to it (main), so the work is kept off this machine too
+  for a in $ARMS; do
+    git -C "$WORK/$a" remote get-url origin >/dev/null 2>&1 || continue
+    git -C "$WORK/$a" push -q origin HEAD:main >> "$WORK/push.log" 2>&1 && echo "$(date -u +%FT%TZ) $a pushed $(git -C "$WORK/$a" rev-parse --short HEAD)" >> "$WORK/push.log"
+  done; true; }
+
 supervise() { # every 5 minutes: relaunch anything that died; at the end, stop the rest and serve the games blind
   while :; do
     now=$(date +%s); dl=$(node -e "console.log(Math.floor(Date.parse('$(cat "$WORK/deadline")')/1000))")
     if [ "$now" -ge "$dl" ] || all_ended; then
       say "finished ($( [ "$now" -ge "$dl" ] && echo deadline || echo 'all arms ended')); stopping and serving blind"
-      stop_arms; "$HERE/blind-serve.sh" start "$WORK" >> "$WORK/supervise.log" 2>&1
+      stop_arms; push_arms; "$HERE/blind-serve.sh" start "$WORK" >> "$WORK/supervise.log" 2>&1
       command -v osascript >/dev/null && osascript -e 'display notification "The games are ready to play blind from port 3101" with title "Emberfall E13 finished"'
       touch "$WORK/FINISHED"; return
     fi
-    launch; sleep "${E13_TICK:-300}"
+    launch; push_arms; sleep "${E13_TICK:-300}"
   done
 }
 
