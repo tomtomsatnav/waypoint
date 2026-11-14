@@ -170,7 +170,7 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .prompt{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;white-space:pre-wrap}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
 .car{margin-top:10px;width:100%;max-width:1100px}.car-stage{position:relative;background:#0b0d11;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;touch-action:pan-y}
-.car-stage img{max-width:100%;max-height:70vh;display:block;cursor:zoom-in;user-select:none;-webkit-user-drag:none}
+.car-stage img{width:100%;height:auto;max-height:70vh;object-fit:contain;display:block;image-rendering:auto;cursor:zoom-in;user-select:none;-webkit-user-drag:none}
 .car-btn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(15,17,21,.75);color:var(--text);font-size:24px;line-height:38px;text-align:center;cursor:pointer}
 .car-btn.prev{left:10px}.car-btn.next{right:10px}.car-btn:hover{background:rgba(40,44,54,.9)}
 .car-meta{display:flex;gap:10px;align-items:baseline;margin:6px 2px}.car-count{color:var(--dim);font-variant-numeric:tabular-nums}
