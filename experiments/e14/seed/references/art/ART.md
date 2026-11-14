@@ -40,5 +40,9 @@ friends") are further frames from the two videos, one every two seconds with nea
 whole dragon fight from start to the death screen. Same creator, same permission, same use: references for the look and
 play only.
 
+`../look-target-v3-NN.jpg` are frames from a third video by the same creator ("Furry spider"), same permission and use: a
+giant spider boss drawn in characters close up (fur texture, legs, webs), its boss bar, a party fighting it, and the death and
+revive, in order.
+
 They show the technique and the feel to aim for. Do not copy that project's names, characters, designs or content:
 Gloamreach is its own game.

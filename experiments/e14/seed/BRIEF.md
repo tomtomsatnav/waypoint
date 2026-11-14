@@ -33,7 +33,11 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   the first): `look-target-v1-*.jpg` and the first four `.png` show the world (grass, water, reflections, ripples, a castle by
   a lake); `look-target-v2-*.jpg` and the other `.png` follow a party through a whole dragon fight drawn in characters (fire
   breath, lightning, ground telegraphs as dotted circles and rings, a phased boss bar, party frames, nameplates, an ability
-  hotbar, death and reviving), in order, so they show how the fight moves as well as how it looks. All are frames from another developer's work in progress, used
+  hotbar, death and reviving), in order, so they show how the fight moves as well as how it looks; `look-target-v3-*.jpg` show a
+  giant furry spider close up, how much texture and detail a creature can carry in characters, and a fight against it.
+- **Monsters with glowing eyes**: hostile creatures have red (or otherwise eerie) glowing eyes that stay bright in the
+  dark, and as they move the glow leaves a short fading red afterglow trail behind them, so a pack moving through the
+  gloom reads as streaks of red light. All are frames from another developer's work in progress, used
   with permission (credits in `references/art/ART.md`): match that density, depth, grass, water, combat readability and HUD, in Gloamreach's own
   world, palette and designs. Do not copy that project's names, characters or content.
 - Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered
