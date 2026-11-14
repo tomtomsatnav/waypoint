@@ -49,7 +49,7 @@ Gloamreach is its own game.
 
 ## Art style (used with permission)
 
-`../style-*.jpg` (200 frames) are from seven work-in-progress videos by **@thirteen_autumns** (Instagram), used here with the
+`../style-*.jpg` (200 frames) are from eight work-in-progress videos by **@thirteen_autumns** (Instagram), used here with the
 creator's permission as the reference for Gloamreach's art style: pixel art rendered from a 3D world. Two frames a second,
 near-duplicates and end cards removed, in order, so consecutive frames also show how things move (the cape, the fog, the
 sand, the ripples):
@@ -62,6 +62,7 @@ sand, the ripples):
 | style-night-* | "new personal best" | a dark night scene |
 | style-fog-* | "the fog gently swirls around you as you walk through it" | fog parting around the player in ruins |
 | style-pond-* | "a little forest pond and about a thousand tiny details" | ripples, lily pads, fireflies, dense foliage |
+| style-stained-glass-* | "POV: You build a whole world just to watch the sun go down" | a snowy cabin through a sunset; stained-glass light moving across a church floor |
 | style-trees-* | "making trees feel massive without blocking everything" | huge trees turning see-through over the player |
 
 They show the style to aim for. Do not copy that project's names, characters, designs or content.

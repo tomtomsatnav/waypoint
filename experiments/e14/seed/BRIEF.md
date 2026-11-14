@@ -19,7 +19,7 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   for the player, enemies, trees, buildings and props, real perspective from the overhead camera), rendered at a low
   internal resolution and shown with crisp, square pixels and a limited, painterly palette, so every frame has true depth,
   light and motion and still reads as hand-made pixel art. Not a flat tile map, and not smooth modern 3D.
-- **The style to match** is shown in `references/style-*.jpg` (200 frames from seven videos by another developer, used with
+- **The style to match** is shown in `references/style-*.jpg` (200 frames from seven videos by another developer, plus the stained-glass frames, used with
   permission; credits in `references/art/ART.md`; read a good spread of them): rich autumn forests in golds, rusts and deep
   greens; moody blue-grey night scenes; warm desert light; soft limited-colour shading with gentle dithering; light
   through leaves; a moving cape; footprints and shifting sand under the feet; fog that swirls and parts around the player;
@@ -34,11 +34,19 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   drifting motes, dust when landing, cloth and capes that move with movement and wind.
 - **Water you can see the world in**: still water shows a rippling reflection of the player, enemies, trees and buildings,
   with lily pads and reeds; anything that touches it sends rings spreading out.
+- **Stained glass and the moving sun**: churches, chapels, the abbey and the shrines have tall stained-glass windows, and
+  light through them throws patches of coloured light (violet, crimson, gold, green) across floors, carpets, pews and the
+  people in them. The patches follow the sun: a slow day and night cycle (the world stays moody: long golden evenings,
+  blue-grey nights, rarely a bright noon) moves them across the room, stretches them at sunset and fades them to faint
+  moonlit colour at night; candles and braziers take over after dark. Outside, the same cycle turns snow and stone gold and
+  then blue, and lit windows glow warm against the dusk. `references/style-stained-glass-*.jpg` show it: a cabin in the
+  snow through a whole sunset above, a church interior with the coloured patches moving across the floor below.
 - **Monsters with glowing eyes**: hostile creatures have red (or otherwise eerie) glowing eyes that stay bright in the
   dark, and as they move the glow leaves a short fading afterglow trail behind them, so a pack moving through the gloom
   reads as streaks of red light.
-- Real lighting: torches, bonfires and spells light their surroundings and flicker; soft shadows; fog and distance fade
-  into atmosphere; moonlight, firelight and the glow of the depths; light through canopies.
+- Real lighting: torches, bonfires and spells light their surroundings and flicker; soft shadows that move with the sun;
+  fog and distance fade into atmosphere; moonlight, firelight and the glow of the depths; light through canopies and
+  stained glass.
 - The player and every enemy are readable silhouettes with animation for walking, running, dodging, casting, attacking,
   staggering, blocking and dying, so a player can read an attack coming.
 - **For play, not look**: `references/look-target-*` (frames from a different developer's character-drawn game, also used
