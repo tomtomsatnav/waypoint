@@ -29,9 +29,11 @@ ordinary laptop (never below 30), using npm-installable libraries as needed.
   scattered with small flowers (`o * .`) and drifting motes.
 - **Water you can see the world in.** Still water shows a real, rippling reflection of the player, enemies, trees and
   buildings above it; anything that touches water sends rings of ripples spreading out, drawn as rings of characters.
-- **The look and play to aim for** is shown in `references/look-target-*.png`: the first four show the world (grass, water,
-  reflections, ripples); `look-target-boss*.png` and `look-target-party.png` show a party fighting a huge creature drawn in
-  characters, with ground telegraphs, a phased boss bar, party frames, nameplates and an ability hotbar. All are frames from another developer's work in progress, used
+- **The look and play to aim for** is shown in `references/look-target-*` (50 frames; read a good spread of them, not just
+  the first): `look-target-v1-*.jpg` and the first four `.png` show the world (grass, water, reflections, ripples, a castle by
+  a lake); `look-target-v2-*.jpg` and the other `.png` follow a party through a whole dragon fight drawn in characters (fire
+  breath, lightning, ground telegraphs as dotted circles and rings, a phased boss bar, party frames, nameplates, an ability
+  hotbar, death and reviving), in order, so they show how the fight moves as well as how it looks. All are frames from another developer's work in progress, used
   with permission (credits in `references/art/ART.md`): match that density, depth, grass, water, combat readability and HUD, in Gloamreach's own
   world, palette and designs. Do not copy that project's names, characters or content.
 - Each part of the world keeps its own character texture: dense blocky glyph fields for stone walls and buildings, clustered

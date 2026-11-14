@@ -35,5 +35,10 @@ dreams", used here with the creator's permission as references for the look only
 
 The last four come from a second video by the same creator, "Party with friends", also used with permission.
 
+`../look-target-v1-NN.jpg` (6 frames, "Water reflection test") and `../look-target-v2-NN.jpg` (40 frames, "Party with
+friends") are further frames from the two videos, one every two seconds with near-duplicates removed, in order: v2 follows a
+whole dragon fight from start to the death screen. Same creator, same permission, same use: references for the look and
+play only.
+
 They show the technique and the feel to aim for. Do not copy that project's names, characters, designs or content:
 Gloamreach is its own game.
