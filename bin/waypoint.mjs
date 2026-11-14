@@ -12,7 +12,7 @@ import { head } from '../lib/git.mjs';
 import { driftMetrics, readTranscript } from '../lib/transcript.mjs';
 import { doctor } from '../lib/doctor.mjs';
 import { build } from '../lib/build.mjs';
-import { autopilot, loadAp, statusText } from '../lib/autopilot.mjs';
+import { autopilot, loadAp, statusText, addNote, readNotes } from '../lib/autopilot.mjs';
 import { formatReport, readReport } from '../lib/report.mjs';
 
 const USAGE = `waypoint <command>
@@ -51,6 +51,10 @@ const USAGE = `waypoint <command>
                           From a brief to a shipped project in the current repo: plan, work, review, repeat, pacing on plan
                           usage and waiting out limits. Without --yes it only prints what it would do.
   autopilot resume [--yes]  Carry on from .git/autopilot after a stop or a restart.
+  autopilot note "<text>" [--urgent]
+                          A note from the owner to a running autopilot ("btw ..."): workers see it from their next task and
+                          the planner folds it into the spec and plan at the next review (with --urgent, after the task in
+                          progress). With no text, lists the notes and what became of them.
   autopilot status        Milestones, tasks, models, spend and usage.
   doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
                           Exit 0 if all are present, 1 otherwise.
@@ -64,7 +68,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json', 'no-research'].includes(k)) { o[k] = true; continue; }
+    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json', 'no-research', 'urgent'].includes(k)) { o[k] = true; continue; }
     const v = argv[++i];
     if (v === undefined) throw new Error(`--${k} needs a value`);
     o[k] = v;
@@ -180,6 +184,13 @@ async function main() {
   if (cmd === 'autopilot') {
     const sub = o._[0];
     if (sub === 'status') { process.stdout.write(statusText(loadAp(process.cwd()))); return 0; }
+    if (sub === 'note') {
+      const text = o._.slice(1).join(' ');
+      if (!text) { for (const n of readNotes(process.cwd())) process.stdout.write(`${n.at.slice(0, 16)}  ${n.reviewed ? `folded in at the review of milestone ${n.reviewed.milestone}` : n.urgent ? 'urgent, waiting' : 'waiting for the next review'}  ${n.text}\n`); return 0; }
+      const n = addNote(process.cwd(), text, { urgent: !!o.urgent });
+      process.stdout.write(`noted${n.urgent ? ' (urgent: the planner reviews after the task in progress)' : ' (workers see it from their next task; the planner folds it in at the next review)'}\n`);
+      return 0;
+    }
     if (sub !== 'start' && sub !== 'resume') throw new Error('autopilot start|resume|status');
     const existing = loadAp(process.cwd());
     if (sub === 'start' && existing) throw new Error('an autopilot run already exists here: use autopilot resume');

@@ -3,10 +3,14 @@
 // now, and anything that looks wrong. It reads the run's files and refreshes itself; it never shows the blind port mapping.
 // Usage: node dashboard.mjs [<work dir>, default ~/emberfall-e13] [--port 3099]
 import http from 'node:http';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, readdirSync, createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { addNote, readNotes } from '../../lib/autopilot.mjs';
+// Sending a note needs this key (it is in the links printed at start); viewing does not.
+const KEY = randomBytes(9).toString('base64url');
 
 const args = process.argv.slice(2);
 const pi = args.indexOf('--port');
@@ -94,6 +98,23 @@ function autopilotPrompts(work) {
     { label: 'Then', text: 'Fable researches what users expect (EXPECTATIONS.md) and how the hardest parts are best built (APPROACH.md), then plans from the brief, the images and those files (SPEC.md, FEATURES.json, milestones with checks). Haiku codes and Sonnet does UI, one checked task at a time, each with one step up (Haiku to Sonnet, Sonnet to Opus). After each milestone a Haiku tester plays the build and reports with screenshots, and Fable decides what comes next.' }];
 }
 
+// Images the dashboard may serve: what the autopilot made for the owner (owner/<note id>/) and the tester's screenshots.
+const AP = join(WORK, 'autopilot');
+const IMG_ROOTS = [join(AP, 'owner'), join(AP, '.git', 'autopilot', 'shots')];
+const pngs = (dir) => { try { return readdirSync(dir).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })); } catch { return []; } };
+function ownerFiles(id) {
+  const dir = join(AP, 'owner', id);
+  const captions = {}; for (const l of (read(join(dir, 'README.md')) || '').split('\n')) { const m = l.match(/^\W*(\d+)\W+(.+)$/); if (m) captions[m[1]] = m[2].trim(); }
+  return { images: pngs(dir).map((f) => ({ src: `/img?p=${encodeURIComponent(join('owner', id, f))}`, caption: captions[f.replace(/\..+$/, '')] || f })) };
+}
+function latestShots() {
+  const root = join(AP, '.git', 'autopilot', 'shots');
+  let dirs = []; try { dirs = readdirSync(root).filter((d) => /tester$/.test(d)); } catch { return null; }
+  dirs.sort((a, b) => Number((b.match(/\d+/) || [0])[0]) - Number((a.match(/\d+/) || [0])[0]));
+  if (!dirs.length) return null;
+  return { milestone: dirs[0], images: pngs(join(root, dirs[0])).map((f) => ({ src: `/img?p=${encodeURIComponent(join('.git', 'autopilot', 'shots', dirs[0], f))}`, caption: f.replace(/\.png$/, '').replace(/[-_]/g, ' ') })) };
+}
+
 function snapshot() {
   const arms = (read(join(WORK, '.arms-run')) || read(join(WORK, '.arms')) || '').trim().split(/\s+/).filter((x) => x && !x.startsWith('compared'));
   const deadline = (read(join(WORK, 'deadline')) || '').trim() || null;
@@ -104,6 +125,8 @@ function snapshot() {
     arms: arms.map((a) => ({ ...(a === 'autopilot' ? autopilotArm() : baselineArm(a)), prompts: a === 'autopilot' ? autopilotPrompts(join(WORK, a)) : sessionPrompts(a) })),
     brief: arms.length ? read(join(WORK, arms[0], 'BRIEF.md')) : null,
     supervise: tail(join(WORK, 'supervise.log'), 6),
+    notes: existsSync(join(WORK, 'autopilot', '.git')) ? readNotes(join(WORK, 'autopilot')).slice(-8).reverse().map((n) => ({ ...n, ...ownerFiles(n.id) })) : [],
+    shots: latestShots(),
   };
   const w = [];
   if (!existsSync(WORK)) w.push(['bad', `No run at ${WORK}. Pass the run's folder: node dashboard.mjs ~/gloamreach-e14`]);
@@ -141,11 +164,20 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .log{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 .brief{white-space:pre-wrap;max-height:480px;overflow:auto;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:8px}
 .prompt{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;white-space:pre-wrap}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.gallery a{display:block;color:var(--dim);font-size:12px;text-decoration:none}.gallery img{width:100%;border-radius:6px;border:1px solid var(--line);display:block;margin-bottom:4px}
+.reply{margin:4px 0 0 18px;color:var(--text)}
 .task{display:flex;gap:8px;align-items:baseline;padding:2px 0}.t-done{color:var(--good)}.t-stuck{color:var(--bad)}.t-retry{color:var(--warn)}.t-pending{color:var(--dim)}
 details summary{cursor:pointer;color:var(--dim);margin-top:8px}ul{margin:4px 0;padding-left:18px}
 @media (max-width:600px){header,main{padding:12px 14px}.grid{grid-template-columns:1fr}}
 </style></head><body><header><h1>Run dashboard</h1><span class="dim mono" id="work"></span><span class="dim" id="updated"></span></header>
 <main><section class="panel" id="brief"></section><section class="panel" id="top"></section><section id="warnings"></section><section class="grid" id="arms"></section>
+<section class="panel" id="notebox"><h2>Send a note to the autopilot</h2>
+<div class="dim" style="margin-bottom:8px">A "btw" while it runs: builders see it from their next task, and the planner folds it into the spec and plan at the next review. Urgent: the planner reviews right after the task in progress.</div>
+<textarea id="note" rows="3" style="width:100%;background:#0b0d11;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit" placeholder="btw, make the dragon bigger and give it a tail swipe"></textarea>
+<div style="display:flex;gap:12px;align-items:center;margin-top:8px"><label><input type="checkbox" id="urgent"> urgent</label><button id="send" style="background:var(--accent);color:#000;border:0;border-radius:8px;padding:6px 14px;font-weight:600">Send</button><span id="sent" class="dim"></span></div>
+<div id="notes" style="margin-top:10px"></div></section>
+<section class="panel" id="shotsbox" style="display:none"><h2 id="shotstitle">Latest screenshots</h2><div class="gallery" id="shots"></div></section>
 <section class="panel"><h2>Supervisor log</h2><div class="log mono" id="sup"></div></section></main>
 <script>
 const esc=(s)=>String(s??'').replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -169,7 +201,15 @@ function arm(a){let h='<div class="panel"><h2>'+esc(a.name)+' '+pill(a.state)+'<
  h+='<details open><summary>Latest commits</summary><ul>'+a.commits.map(c=>'<li><span class="dim">'+ago(c.at)+'</span> '+esc(c.subject)+'</li>').join('')+'</ul></details>';
  h+='<details><summary>Log</summary><div class="log mono">'+a.log.map(esc).join('\\n')+'</div></details></div>';return h}
 let briefShown=null;
+const KEY=new URLSearchParams(location.search).get('key');
+if(!KEY)document.getElementById('notebox').innerHTML='<h2>Send a note to the autopilot</h2><div class="dim">Open the link with <code>?key=</code> that the dashboard printed in Terminal to send notes from here.</div><div id="notes" style="margin-top:10px"></div>';
+else document.getElementById('send').onclick=async()=>{const t=document.getElementById('note').value.trim();if(!t)return;
+ const r=await fetch('/note?key='+encodeURIComponent(KEY),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,urgent:document.getElementById('urgent').checked})});
+ document.getElementById('sent').textContent=r.ok?'sent':'not sent: '+(await r.text());if(r.ok){document.getElementById('note').value='';tick();}};
 async function tick(){try{const s=await (await fetch('/api')).json();
+ const gal=(imgs)=>'<div class="gallery">'+imgs.map(i=>'<a href="'+i.src+'" target="_blank"><img loading="lazy" src="'+i.src+'">'+esc(i.caption)+'</a>').join('')+'</div>';
+ document.getElementById('notes').innerHTML=(s.notes||[]).map(n=>'<div style="margin-bottom:10px"><div class="task"><span class="'+(n.reviewed?'t-done':n.urgent?'t-retry':'t-pending')+'">●</span><span>'+esc(n.text)+' <span class="dim">'+esc(n.at.slice(11,16))+' · '+(n.reviewed?'folded into the plan (milestone '+n.reviewed.milestone+' review)':n.urgent?'urgent, waiting for the review':'waiting for the next review')+'</span></span></div>'+(n.reply?'<div class="reply">↳ '+esc(n.reply)+'</div>':'')+(n.images&&n.images.length?gal(n.images):'')+'</div>').join('');
+ if(s.shots&&s.shots.images.length){document.getElementById('shotsbox').style.display='';document.getElementById('shotstitle').textContent='Latest screenshots ('+s.shots.milestone.replace('-tester','').replace('m','milestone ')+', taken by the tester)';const h=gal(s.shots.images);if(document.getElementById('shots').dataset.h!==h){document.getElementById('shots').innerHTML=h;document.getElementById('shots').dataset.h=h;}}
  if(s.brief&&s.brief!==briefShown){briefShown=s.brief;const t=(s.brief.match(/^#\\s*(.+)$/m)||[])[1]||'Brief';const lead=(s.brief.split('\\n').find(l=>l.trim()&&!l.startsWith('#'))||'');
   document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead.split('**').join(''))+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
  if(!s.brief)document.getElementById('brief').style.display='none';
@@ -182,11 +222,26 @@ tick();setInterval(tick,30000);
 </script></body></html>`;
 
 http.createServer((req, res) => {
+  if (req.method === 'POST' && req.url.startsWith('/note')) {
+    if (new URL(req.url, 'http://x').searchParams.get('key') !== KEY) { res.writeHead(403); return res.end('wrong key'); }
+    let body = ''; req.on('data', (d) => { body += d; if (body.length > 20000) req.destroy(); });
+    req.on('end', () => {
+      try { const { text, urgent } = JSON.parse(body); addNote(join(WORK, 'autopilot'), text, { urgent }); res.writeHead(200); res.end('ok'); }
+      catch (e) { res.writeHead(400); res.end(String(e.message || e)); }
+    });
+    return;
+  }
+  if (req.url.startsWith('/img?')) {
+    const f = resolve(AP, new URL(req.url, 'http://x').searchParams.get('p') || '');
+    if (!IMG_ROOTS.some((r) => f.startsWith(r + '/')) || !existsSync(f)) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'content-type': /\.png$/i.test(f) ? 'image/png' : 'image/jpeg', 'cache-control': 'max-age=60' });
+    return createReadStream(f).pipe(res);
+  }
   if (req.url === '/api') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(snapshot())); }
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(PAGE);
 }).listen(PORT, LAN ? '0.0.0.0' : '127.0.0.1', async () => {
-  process.stdout.write(`dashboard for ${WORK}: http://localhost:${PORT}\n`);
+  process.stdout.write(`dashboard for ${WORK}: http://localhost:${PORT}/?key=${KEY}\n`);
   if (LAN) { const { networkInterfaces } = await import('node:os');
     for (const list of Object.values(networkInterfaces())) for (const n of list || []) if (n.family === 'IPv4' && !n.internal)
-      process.stdout.write(`  on your phone (same Wi-Fi): http://${n.address}:${PORT}\n`); }
+      process.stdout.write(`  on your phone (same Wi-Fi): http://${n.address}:${PORT}/?key=${KEY}\n`); }
 });

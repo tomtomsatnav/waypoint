@@ -48,7 +48,7 @@ if (/reviewer/.test(p)) { if (process.env.FAKE_AP_LOG) appendFileSync(process.en
   const mode = process.env.FAKE_AP_REVIEW_MODE; const mark = process.env.FAKE_AP_LOG + '.review-once';
   if (mode === 'comments') writeFileSync(rf, '{\n  "verdict": "ship", // or continue\n  "assessment": "fine, see http://x//y",\n}\n');
   else if (mode === 'nomilestone-once' && !existsSync(mark)) { writeFileSync(mark, '1'); writeFileSync(rf, JSON.stringify({ verdict: 'continue', assessment: 'more to do' })); }
-  else writeFileSync(rf, JSON.stringify({ verdict: 'ship', assessment: 'fine' })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
+  else writeFileSync(rf, JSON.stringify({ verdict: 'ship', assessment: 'fine', replies: [...p.matchAll(/^- \[(n\d+-[a-z0-9]+)\]/gm)].map((x) => ({ note: x[1], text: `will do ${x[1]}` })) })); done(/final reviewer/.test(p) ? 'confirm' : 'review'); usage(); result(); process.exit(0); }
 
 // FAKE_AP_LIMIT_ONCE=<marker file>: the first worker call ends as the CLI does when the 5-hour limit is hit.
 if (process.env.FAKE_AP_LIMIT_ONCE && !existsSync(process.env.FAKE_AP_LIMIT_ONCE)) {

@@ -11,6 +11,7 @@
 #   ./run-e13.sh stop     stop everything (start carries on later)
 #   ./run-e13.sh serve    boot the finished games blind on ports 3101 upwards (done automatically at the end)
 #   ./run-e13.sh reveal   which port was which (only after your blind feedback)
+#   ./run-e13.sh note "btw ..." [--urgent]   a note to the running autopilot (no text: list notes)
 #
 # Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52, or none: run until it ships),
 # E13_SEED (the starting repo; default ./seed), E13_BUDGET (60, or none for no spending caps), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
@@ -134,5 +135,6 @@ case "${1:-start}" in
   stop) pkill -f "$SUP"; stop_arms; echo stopped ;;
   serve) "$HERE/blind-serve.sh" start "$WORK" ;;
   reveal) "$HERE/blind-serve.sh" reveal "$WORK" ;;
+  note) shift; (cd "$WORK/autopilot" && node "$WP/bin/waypoint.mjs" autopilot note "$@") ;;
   *) sed -n 2,16p "$HERE/run-e13.sh" ;;
 esac
