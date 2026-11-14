@@ -169,7 +169,7 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .brief{white-space:pre-wrap;max-height:480px;overflow:auto;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:8px}
 .prompt{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 8px;white-space:pre-wrap}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
-.car{margin-top:10px;max-width:900px}.car-stage{position:relative;background:#0b0d11;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;touch-action:pan-y}
+.car{margin-top:10px;width:100%;max-width:1100px}.car-stage{position:relative;background:#0b0d11;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;touch-action:pan-y}
 .car-stage img{max-width:100%;max-height:70vh;display:block;cursor:zoom-in;user-select:none;-webkit-user-drag:none}
 .car-btn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(15,17,21,.75);color:var(--text);font-size:24px;line-height:38px;text-align:center;cursor:pointer}
 .car-btn.prev{left:10px}.car-btn.next{right:10px}.car-btn:hover{background:rgba(40,44,54,.9)}
@@ -188,7 +188,7 @@ details summary{cursor:pointer;color:var(--dim);margin-top:8px}ul{margin:4px 0;p
 <textarea id="note" rows="3" style="width:100%;background:#0b0d11;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit" placeholder="btw, make the dragon bigger and give it a tail swipe"></textarea>
 <div style="display:flex;gap:12px;align-items:center;margin-top:8px"><label><input type="checkbox" id="urgent"> urgent</label><button id="send" style="background:var(--accent);color:#000;border:0;border-radius:8px;padding:6px 14px;font-weight:600">Send</button><span id="sent" class="dim"></span></div>
 <div id="notes" style="margin-top:10px"></div></section>
-<section class="panel" id="shotsbox" style="display:none"><h2 id="shotstitle">Latest screenshots</h2><div class="gallery" id="shots"></div></section>
+<section class="panel" id="shotsbox" style="display:none"><h2 id="shotstitle">Latest screenshots</h2><div id="shots"></div></section>
 <section class="panel"><h2>Supervisor log</h2><div class="log mono" id="sup"></div></section></main>
 <script>
 const esc=(s)=>String(s??'').replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
