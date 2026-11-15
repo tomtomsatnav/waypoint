@@ -76,3 +76,17 @@ test('a revised brief on resume replaces the old one and becomes an urgent note 
   assert.equal(note.reviewed.milestone, 1, 'folded in by the next review');
   assert.match(readFileSync(log + '.review-prompts', 'utf8'), /new brief: pixel art[\s\S]*revised the brief/);
 });
+
+test('a resume asks the plan afresh instead of trusting a saved usage reading (limits can be reset early)', async () => {
+  const { repo } = setup();
+  await autopilot({ repo, brief: 'b', deadlineHours: 1, research: false, claude: FAKE, log: () => {} });
+  const { loadAp } = await import('../lib/autopilot.mjs');
+  const { writeJsonAtomic } = await import('../lib/state.mjs');
+  const st0 = loadAp(repo); st0.finished = null; st0.shipped = false;
+  st0.usage = { at: Date.now(), status: 'allowed', fiveHour: { util: 0.4, resetsAt: Date.now() + 3600000 }, sevenDay: { util: 0.99, resetsAt: Date.now() + 3 * 86400000 } };
+  writeJsonAtomic(join(repo, '.git', 'autopilot', 'state.json'), st0);
+  const said = [];
+  const st = await autopilot({ repo, deadlineHours: 1, research: false, claude: FAKE, log: (m) => said.push(m) });
+  assert.ok(!said.some((m) => /pausing until/.test(m)), `it did not pause on the stale 99%: ${said.join(' | ')}`);
+  assert.ok(st.usage === null || st.usage.sevenDay.util < 0.5);
+});
