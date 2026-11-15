@@ -14,7 +14,7 @@
 #   ./run-e13.sh note "btw ..." [--urgent]   a note to the running autopilot (no text: list notes)
 #
 # Settings (environment): E13_WORK (default ~/emberfall-e13), E13_ARMS (default "autopilot single loop"), E13_HOURS (52, or none: run until it ships),
-# E13_SEED (the starting repo; default ./seed), E13_BUDGET (60, or none for no spending caps), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
+# E13_WEEKLY (weekly usage ceiling, default 0.85), E13_SEED (the starting repo; default ./seed), E13_BUDGET (60, or none for no spending caps), E13_COMPARE (finished arms' repos, space-separated, to include unchanged in the blind review).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 WORK=${E13_WORK:-$HOME/emberfall-e13}; HOURS=${E13_HOURS:-52}; BUDGET=${E13_BUDGET:-60}
@@ -78,6 +78,7 @@ launch() { # start any arm that is not running and not finished
   if has autopilot && ! ended autopilot && ! ap_alive; then
     local refs; refs=$(cd "$WORK/autopilot" && ls references/*.png references/*.jpg references/art/*.jpg 2>/dev/null | paste -sd, -)
     if [ -f "$WORK/autopilot/.git/autopilot/state.json" ]; then sub=(resume --brief-file BRIEF.md --references "$refs"); else sub=(start --brief-file BRIEF.md --references "$refs" --hours "$HOURS"); [ "$BUDGET" = none ] || sub+=(--budget-usd "$BUDGET"); fi
+    [ -n "${E13_WEEKLY:-}" ] && sub+=(--weekly-ceiling "$E13_WEEKLY")   # e.g. 0.98: use more of the week (the plan still stops at 100%)
     (cd "$WORK/autopilot" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$WORK/autopilot.out" 2>> "$WORK/autopilot.err" < /dev/null &)
     say "launched autopilot (${sub[0]})"
   fi

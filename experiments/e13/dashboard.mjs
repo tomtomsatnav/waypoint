@@ -62,7 +62,7 @@ function autopilotArm() {
     a.current = { line, since: d.getTime(), work: /^(work |\d+ workers )/.test(line) };
   }
   const pausing = [...log].reverse().find((l) => /pausing until/.test(l));
-  if (pausing && pausing === lastLine) a.pausedUntil = (pausing.match(/pausing until (\S+?):/) || [])[1] ?? null;
+  if (pausing && pausing === lastLine) a.pausedUntil = (pausing.match(/pausing until (\S+?Z)/) || [])[1] ?? null;
   a.state = a.ended ? `ended: ${a.end}` : running ? (a.pausedUntil ? 'paused for usage' : 'running') : 'down';
   return a;
 }
