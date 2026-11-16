@@ -1,0 +1,15 @@
+{
+  "name": "waypoint",
+  "description": "waypoint: an autopilot that builds large projects with Claude Code over hours or days, and an expectations-first skill.",
+  "owner": {
+    "name": "tomtomsatnav"
+  },
+  "plugins": [
+    {
+      "name": "waypoint",
+      "source": "./",
+      "description": "Build large projects autonomously for hours or days with Claude Code, and steer them while they run; plus an expectations-first skill for everyday builds.",
+      "version": "0.2.0"
+    }
+  ]
+}

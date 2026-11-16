@@ -12,6 +12,25 @@ Two ways to use it:
 | `waypoint build` | A short research pass writes down what users of this kind of thing expect but the brief doesn't say, then one Claude Code session builds it | Projects that fit in one long session; quick and cheap |
 | `waypoint autopilot` | A strong model researches, plans milestones and reviews; cheaper models build one checked task at a time; a tester plays each milestone; it runs until it ships | Big projects (days of work), or anything you want to steer while it runs |
 
+## Install as a Claude Code plugin (recommended)
+
+In Claude Code:
+
+```
+/plugin install waypoint --marketplace tomtomsatnav/waypoint-framework
+```
+
+(use the owner and name of the repository you got this from). That gives Claude two skills:
+
+- **waypoint**: say "build this with waypoint", "keep working on my game overnight", "how's the run going?" or "tell it the
+  menus are too bright", and Claude writes a brief with you, starts the autopilot, shows you the dashboard, relays notes and
+  reports progress. No commands to remember.
+- **expectations**: whenever you ask Claude to build something from a description, it first writes down what users of that
+  kind of product expect that you didn't say (each with a check), then builds to it. The single change that helped most
+  in testing; it needs nothing else from waypoint.
+
+Or use it directly from a clone, as below.
+
 ## Needs
 
 - Node 18 or newer, and git.
