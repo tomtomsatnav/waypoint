@@ -8,7 +8,8 @@ import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { addNote, readNotes } from '../../lib/autopilot.mjs';
+import { addNote, readNotes, apDir, loadAp } from '../../lib/autopilot.mjs';
+import { setWebhook, webhookUrl, postUpdate } from '../../lib/discord.mjs';
 
 
 const args = process.argv.slice(2);
@@ -131,6 +132,7 @@ function snapshot() {
     supervise: tail(join(WORK, 'supervise.log'), 6),
     notes: existsSync(join(WORK, 'autopilot', '.git')) ? readNotes(join(WORK, 'autopilot')).slice(-8).reverse().map((n) => ({ ...n, ...ownerFiles(n.id) })) : [],
     shots: latestShots(),
+    discord: (() => { try { const u = webhookUrl(apDir(AP)); return u ? { on: true, hint: `…${u.slice(-6)}` } : { on: false }; } catch { return { on: false }; } })(),
   };
   const w = [];
   if (!existsSync(WORK)) w.push(['bad', `No run at ${WORK}. Pass the run's folder: node dashboard.mjs ~/gloamreach-e14`]);
@@ -178,6 +180,7 @@ main{padding:18px 24px;display:grid;gap:16px}.grid{display:grid;gap:16px;grid-te
 .car-thumbs img.on{border-color:var(--accent);opacity:1}
 .gallery a{display:block;color:var(--dim);font-size:12px;text-decoration:none}.gallery img{width:100%;border-radius:6px;border:1px solid var(--line);display:block;margin-bottom:4px}
 .reply{margin:4px 0 0 18px;color:var(--text)}
+.dbtn{background:#262b36;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}.dbtn[data-d=save]{background:var(--accent);color:#000;font-weight:600;border:0}
 .task{display:flex;gap:8px;align-items:baseline;padding:2px 0}.t-done{color:var(--good)}.t-stuck{color:var(--bad)}.t-retry{color:var(--warn)}.t-pending{color:var(--dim)}
 details summary{cursor:pointer;color:var(--dim);margin-top:8px}ul{margin:4px 0;padding-left:18px}
 @media (max-width:600px){header,main{padding:12px 14px}.grid{grid-template-columns:1fr}}
@@ -188,6 +191,12 @@ details summary{cursor:pointer;color:var(--dim);margin-top:8px}ul{margin:4px 0;p
 <textarea id="note" rows="3" style="width:100%;background:#0b0d11;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit" placeholder="btw, make the dragon bigger and give it a tail swipe"></textarea>
 <div style="display:flex;gap:12px;align-items:center;margin-top:8px"><label><input type="checkbox" id="urgent"> urgent</label><button id="send" style="background:var(--accent);color:#000;border:0;border-radius:8px;padding:6px 14px;font-weight:600">Send</button><span id="sent" class="dim"></span></div>
 <div id="notes" style="margin-top:10px"></div></section>
+<section class="panel" id="discordbox"><h2>Discord updates</h2>
+<div class="dim" style="margin-bottom:8px">Posts each milestone, the tester's screenshots, reviews and replies to your notes, images made for you, pauses and the end to a Discord channel. In Discord: channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL. The URL stays on this machine and is never shown here again.</div>
+<div id="dstatus" class="dim" style="margin-bottom:8px"></div>
+<div id="dform" style="display:flex;gap:8px;flex-wrap:wrap"><input id="dhook" type="password" autocomplete="off" placeholder="https://discord.com/api/webhooks/…" style="flex:1;min-width:240px;background:#0b0d11;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit">
+<button data-d="save" class="dbtn">Save</button><button data-d="test" class="dbtn">Send test</button><button data-d="off" class="dbtn">Turn off</button></div>
+<div id="dmsg" class="dim" style="margin-top:6px"></div></section>
 <section class="panel" id="shotsbox" style="display:none"><h2 id="shotstitle">Latest screenshots</h2><div id="shots"></div></section>
 <section class="panel"><h2>Supervisor log</h2><div class="log mono" id="sup"></div></section></main>
 <script>
@@ -232,7 +241,12 @@ if(!KEY)document.getElementById('notebox').innerHTML='<h2>Send a note to the aut
 else document.getElementById('send').onclick=async()=>{const t=document.getElementById('note').value.trim();if(!t)return;
  const r=await fetch('/note?key='+encodeURIComponent(KEY),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,urgent:document.getElementById('urgent').checked})});
  document.getElementById('sent').textContent=r.ok?'sent':'not sent: '+(await r.text());if(r.ok){document.getElementById('note').value='';tick();}};
+if(!KEY){document.getElementById('dform').style.display='none';document.getElementById('dmsg').textContent='Open the link with ?key= to change this.';}
+else document.querySelectorAll('.dbtn').forEach((b)=>b.onclick=async()=>{const action=b.dataset.d,url=document.getElementById('dhook').value.trim();if(action==='save'&&!url)return;
+ document.getElementById('dmsg').textContent='…';const r=await fetch('/discord?key='+encodeURIComponent(KEY),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,url})});
+ document.getElementById('dmsg').textContent=await r.text();if(r.ok)document.getElementById('dhook').value='';tick();});
 async function tick(){try{const s=await (await fetch('/api')).json();
+ document.getElementById('dstatus').innerHTML=s.discord&&s.discord.on?'<span class="pill s-running">connected</span> <span class="dim">webhook '+esc(s.discord.hint)+'</span>':'<span class="pill s-other">off</span>';
  const gal=(imgs,id)=>car(id,imgs);
  const nh=(s.notes||[]).map(n=>'<div style="margin-bottom:10px"><div class="task"><span class="'+(n.reviewed?'t-done':n.urgent?'t-retry':'t-pending')+'">●</span><span>'+esc(n.text)+' <span class="dim">'+esc(n.at.slice(11,16))+' · '+(n.reviewed?'folded into the plan (milestone '+n.reviewed.milestone+' review)':n.urgent?'urgent, waiting for the review':'waiting for the next review')+'</span></span></div>'+(n.reply?'<div class="reply">↳ '+esc(n.reply)+'</div>':'')+(n.images&&n.images.length?gal(n.images,n.id):'')+'</div>').join('');
  const ne=document.getElementById('notes');if(ne.dataset.h!==nh){ne.innerHTML=nh;ne.dataset.h=nh;}
@@ -255,6 +269,22 @@ http.createServer((req, res) => {
     req.on('end', () => {
       try { const { text, urgent } = JSON.parse(body); addNote(join(WORK, 'autopilot'), text, { urgent }); res.writeHead(200); res.end('ok'); }
       catch (e) { res.writeHead(400); res.end(String(e.message || e)); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && req.url.startsWith('/discord')) {
+    if (new URL(req.url, 'http://x').searchParams.get('key') !== KEY) { res.writeHead(403); return res.end('wrong key'); }
+    let body = ''; req.on('data', (d) => { body += d; if (body.length > 5000) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const { action, url } = JSON.parse(body || '{}'); const dir = apDir(AP);
+        if (action === 'off') { setWebhook(dir, null); res.writeHead(200); return res.end('Discord updates off'); }
+        if (action === 'save') setWebhook(dir, String(url || '').trim());
+        if (!webhookUrl(dir)) { res.writeHead(400); return res.end('no webhook set'); }
+        const st = loadAp(AP); let err = null;
+        const ok = await postUpdate(dir, { kind: 'milestone', title: 'waypoint is connected', description: st ? `Posting updates for this run: milestone ${st.milestones.length}, ${st.milestones.at(-1)?.title || 'planning'}.` : 'Posting updates for this run.' }, (e) => { err = e; });
+        res.writeHead(ok ? 200 : 502); res.end(ok ? (action === 'save' ? 'saved, test message posted' : 'test message posted') : `saved, but the test failed: ${err}`);
+      } catch (e) { res.writeHead(400); res.end(String(e.message || e)); }
     });
     return;
   }
