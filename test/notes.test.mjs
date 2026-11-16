@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { autopilot, addNote, readNotes, pendingNotes } from '../lib/autopilot.mjs';
 import { makeRepo, sh, ROOT } from './helpers.mjs';
@@ -89,4 +89,22 @@ test('a resume asks the plan afresh instead of trusting a saved usage reading (l
   const st = await autopilot({ repo, deadlineHours: 1, research: false, claude: FAKE, log: (m) => said.push(m) });
   assert.ok(!said.some((m) => /pausing until/.test(m)), `it did not pause on the stale 99%: ${said.join(' | ')}`);
   assert.ok(st.usage === null || st.usage.sevenDay.util < 0.5);
+});
+
+test('a project already under way is detected and the planner is told to survey it and continue', async () => {
+  const { repo, log } = setup();
+  for (const f of ['src/a.mjs', 'src/b.mjs', 'src/c.mjs', 'package.json']) { mkdirSync(join(repo, f, '..'), { recursive: true }); writeFileSync(join(repo, f), '// work\n'); }
+  sh(repo, 'git add -A && git commit -qm "existing work"');
+  const said = [];
+  const st = await autopilot({ repo, brief: 'finish it', deadlineHours: 1, research: false, claude: FAKE, log: (m) => said.push(m) });
+  assert.ok(st.existing && st.existing.files >= 4);
+  assert.ok(said.some((m) => /picking up a project already under way/.test(m)));
+  const planCall = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).find((c) => c.role === 'plan');
+  assert.ok(planCall);
+});
+
+test('a new project is not mistaken for one under way', async () => {
+  const { repo } = setup();
+  const st = await autopilot({ repo, brief: 'b', deadlineHours: 1, research: false, claude: FAKE, log: () => {} });
+  assert.equal(st.existing, null);
 });

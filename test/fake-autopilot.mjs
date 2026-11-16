@@ -22,7 +22,7 @@ const usage = () => out({ type: 'rate_limit_event', rate_limit_info: { status: '
   five_hour: { utilization: Number(process.env.FAKE_AP_UTIL ?? 0.1), resetsAt: Date.now() / 1000 + 4 * 3600, status: 'allowed' },
   seven_day: { utilization: 0.1, resetsAt: Date.now() / 1000 + 6 * 86400, status: 'allowed' } } } });
 const done = (role) => {
-  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, resume: flag('--resume') ?? null, capped: argv.includes('--max-budget-usd'), prompt: p.slice(0, 300), cwd: process.cwd(), start, end: Date.now() }) + '\n');
+  appendFileSync(process.env.FAKE_AP_LOG, JSON.stringify({ role, model: flag('--model'), effort: flag('--effort') ?? null, resume: flag('--resume') ?? null, capped: argv.includes('--max-budget-usd'), prompt: p.slice(0, 1000), cwd: process.cwd(), start, end: Date.now() }) + '\n');
 };
 const result = () => out({ type: 'result', subtype: 'success', total_cost_usd: 0.05, num_turns: 1, result: 'ok' });
 const m = (re) => (p.match(re) || [])[1];

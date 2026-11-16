@@ -210,13 +210,13 @@ async function main() {
     const existing = loadAp(process.cwd());
     if (sub === 'start' && existing) throw new Error('an autopilot run already exists here: use autopilot resume');
     if (sub === 'resume' && !existing) throw new Error('nothing to resume here');
-    const opts = { repo: process.cwd(), brief: o['brief-file'] ? readFileSync(o['brief-file'], 'utf8') : undefined,
+    const opts = { repo: process.cwd(), brief: o['brief-file'] ? readFileSync(o['brief-file'], 'utf8') : o.brief ? String(o.brief) : undefined,
       references: o.references ? String(o.references).split(',').map((s) => s.trim()).filter(Boolean) : [],
       budgetUsd: num(o['budget-usd'], 'budget-usd'), deadlineHours: num(o.hours, 'hours'), strongModel: o['strong-model'],
       configDir: o['config-dir'], claude: o.claude, verify: o.verify, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'),
       forceModel: o['force-model'], reviewModel: o['review-model'], researchModel: o['research-model'], testerModel: o['tester-model'], maxWorkers: num(o['max-workers'], 'max-workers'),
       overheadShare: num(o['overhead-share'], 'overhead-share'), research: o['no-research'] ? false : undefined };
-    if (sub === 'start' && !opts.brief) throw new Error('autopilot start needs --brief-file');
+    if (sub === 'start' && !opts.brief) throw new Error('autopilot start needs --brief-file <file> or --brief "<text>" (for a project already under way, the brief says what it should become)');
     if (sub === 'start' && opts.budgetUsd != null && !(opts.budgetUsd > 0)) throw new Error('--budget-usd must be positive (leave it out for no budget)');
     const shownBudget = opts.budgetUsd ?? existing?.policy.budgetUsd;
     process.stderr.write(`[autopilot] ${sub} in ${process.cwd()}: ${shownBudget ? `budget $${shownBudget}` : 'no budget (no spending caps; plan usage limits still pause it)'}, ${opts.deadlineHours ?? 48} h, strong model ${opts.strongModel ?? 'claude-fable-5-1'}\n`);
