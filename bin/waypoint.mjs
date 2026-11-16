@@ -42,7 +42,7 @@ const USAGE = `waypoint <command>
   status [--json]         Show the current state. --json prints one JSON object (no check output); exit 1 with no state.
   report <report.json>    Summary of a run report: outcome, cost, wall clock, tasks, sessions.
   build --brief-file <f> [--model sonnet] [--budget-usd 30] [--no-research] [--yes]
-                          The default way to build from a brief (it won E13c): a short research pass writes EXPECTATIONS.md
+                          The default way to build from a brief (it did best in testing): a short research pass writes EXPECTATIONS.md
                           (what users expect that the brief does not say), then one plain session builds it, waiting out
                           usage limits and resuming after them or a restart. Run it again to carry on.
   autopilot start --brief-file <f> [--budget-usd <usd>, default none] [--hours 48] [--references a.png,b.png] [--strong-model m]
@@ -116,7 +116,7 @@ async function main() {
       wallClockSec: num(o['wall-clock'], 'wall-clock') ?? 1800,
       maxContextTokens: num(o['max-context'], 'max-context'),
       // Default: compact against a 200k window (fires near 160k) whatever the model's own window. On Haiku 5.5 (1M) earlier
-      // compaction was cheaper at the same quality (E6/E7: $0.18-0.35 near 100k, $0.57 near 200k, $1.77 uncompacted at 344k),
+      // compaction was cheaper at the same quality (in testing: $0.18-0.35 near 100k, $0.57 near 200k, $1.77 uncompacted at 344k),
       // since prompts above 100k bill higher and each turn re-sends the context. `auto` keeps Claude Code's own default.
       // Only when --autocompact-pct is absent too, so a percentage keeps meaning "of the model's window".
       autocompact: o.autocompact === 'auto' ? undefined : o.autocompact !== undefined ? num(o.autocompact, 'autocompact') : o['autocompact-pct'] !== undefined ? undefined : 200000,
