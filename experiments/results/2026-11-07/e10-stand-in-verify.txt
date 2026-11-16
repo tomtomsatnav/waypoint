@@ -1,0 +1,1 @@
+git diff --quiet --diff-filter=DM {base} -- ':(glob)**/test/**' ':(glob)**/*.test.mjs' ':(glob)**/test.mjs' ':(glob)**/*.test.js'

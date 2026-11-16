@@ -1,0 +1,1 @@
+{"run":"e7sonnet-0","outcome":"limit","cost":0.886,"wall":290.3,"stops":9,"tasks":"dbppppp","blocks":7,"testsPassing":40,"of":110,"outOfScopeFiles":0,"maxContext":93204,"cap":null,"terminalReason":"completed","toolCalls":25,"compactions":0,"reReads":0}

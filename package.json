@@ -1,0 +1,21 @@
+{
+  "name": "waypoint",
+  "version": "0.1.0",
+  "description": "Keeps a long-running Claude Code agent on course and moving, using Claude Code's own hooks.",
+  "type": "module",
+  "bin": {
+    "waypoint": "bin/waypoint.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "license": "MIT",
+  "aosOrchestrator": {
+    "repo": "https://github.com/tomtomsatnav/aos-orchestrator",
+    "commit": "4ac965e6e5d82d58e915d379058744de8126f524",
+    "note": "aos-orch verify, pinned; install with scripts/install-aos-orch.sh"
+  }
+}

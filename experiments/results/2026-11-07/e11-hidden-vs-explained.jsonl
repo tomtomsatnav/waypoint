@@ -1,0 +1,6 @@
+{"run":"e11R-2","arm":"R","outcome":"blocked","tasks":"bpppppp","blocks":6,"testsPassing":25,"of":110,"workerCost":0.05,"explainCalls":0,"explainCost":0,"explainLeaks":0,"wallMin":2.8,"hiddenTouches":0}
+{"run":"e11R-3","arm":"R","outcome":"blocked","tasks":"dbppppp","blocks":8,"testsPassing":41,"of":110,"workerCost":0.446,"explainCalls":0,"explainCost":0,"explainLeaks":0,"wallMin":7.9,"hiddenTouches":0}
+{"run":"e11R-1","arm":"R","outcome":"blocked","tasks":"dbppppp","blocks":7,"testsPassing":36,"of":110,"workerCost":0.414,"explainCalls":0,"explainCost":0,"explainLeaks":0,"wallMin":7.9,"hiddenTouches":0}
+{"run":"e11T-1","arm":"T","outcome":"blocked","tasks":"dddbppp","blocks":8,"testsPassing":62,"of":110,"workerCost":1.022,"explainCalls":9,"explainCost":2.986,"explainLeaks":2,"wallMin":16.8,"hiddenTouches":0}
+{"run":"e11T-2","arm":"T","outcome":"blocked","tasks":"dddbppp","blocks":10,"testsPassing":63,"of":110,"workerCost":1.148,"explainCalls":10,"explainCost":3.447,"explainLeaks":0,"wallMin":19.8,"hiddenTouches":0}
+{"run":"e11T-3","arm":"T","outcome":"blocked","tasks":"dddbppp","blocks":10,"testsPassing":64,"of":110,"workerCost":1.479,"explainCalls":11,"explainCost":3.804,"explainLeaks":0,"wallMin":21.8,"hiddenTouches":0}

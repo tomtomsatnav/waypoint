@@ -1,0 +1,3 @@
+{"run":"e7-0","outcome":"done","cost":1.765,"wall":1348.1,"stops":8,"tasks":"ddddddd","blocks":1,"testsPassing":110,"of":110,"outOfScopeFiles":16,"maxContext":344440,"cap":null,"terminalReason":"completed","toolCalls":95,"compactions":0,"reReads":0}
+{"run":"e7-1","outcome":"done","cost":1.444,"wall":1171,"stops":8,"tasks":"ddddddd","blocks":1,"testsPassing":110,"of":110,"outOfScopeFiles":0,"maxContext":318712,"cap":null,"terminalReason":"completed","toolCalls":90,"compactions":0,"reReads":0}
+{"run":"e7-2","outcome":"done","cost":1.908,"wall":1329.5,"stops":10,"tasks":"ddddddd","blocks":3,"testsPassing":110,"of":110,"outOfScopeFiles":6,"maxContext":355313,"cap":null,"terminalReason":"completed","toolCalls":111,"compactions":0,"reReads":0}

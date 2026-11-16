@@ -1,0 +1,15 @@
+{"type":"user","message":{"content":"Do the task."}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":1001,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t2","name":"Read","input":{"file_path":"/r/b.js"}}],"usage":{"input_tokens":1002,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t3","name":"Edit","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":1003,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t4","name":"Read","input":{"file_path":"/r/c.js"}}],"usage":{"input_tokens":1004,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"system","subtype":"compact_boundary","compactMetadata":{"trigger":"auto","preTokens":81234,"postTokens":9100}}
+{"type":"user","isCompactSummary":true,"message":{"content":"This session is being continued..."}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"tb","name":"Bash","input":{"command":"cat src/c.js && git status"}}],"usage":{"input_tokens":5}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t5","name":"Read","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":1005,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t6","name":"Read","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":1006,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t7","name":"Read","input":{"file_path":"/r/b.js"}}],"usage":{"input_tokens":1007,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t8","name":"Edit","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":1008,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t9","name":"Write","input":{"file_path":"/r/d.js"}}],"usage":{"input_tokens":1009,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","isSidechain":false,"message":{"content":[{"type":"tool_use","id":"t10","name":"Read","input":{"file_path":"/r/d.js"}}],"usage":{"input_tokens":1200,"cache_creation_input_tokens":300,"cache_read_input_tokens":30000}}}
+{"type":"assistant","isSidechain":true,"message":{"content":[{"type":"tool_use","id":"t11","name":"Read","input":{"file_path":"/r/a.js"}}],"usage":{"input_tokens":999999}}}
