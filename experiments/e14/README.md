@@ -46,3 +46,10 @@ The researched arm will probably end within a few hours (one session stops by it
 If an arm's repo has a remote called `origin`, the supervisor pushes it to `main` every five minutes and once more when the
 run ends (log: `<work>/push.log`). Add the remote once (`git -C ~/gloamreach-e14d/autopilot remote add origin <url>`); the
 autopilot's own state stays local, inside `.git`.
+
+## Updates in Discord
+
+`run-e13.sh discord <webhook url>` (with `E13_WORK` set) posts development updates to a Discord channel: each milestone
+planned, the tester's screenshots after it, the review's verdict and replies to your notes, images made for you (mockups,
+variants), pauses for usage and the end. `discord test` sends a test message, `discord off` stops. The URL is kept in the
+run's `.git/autopilot/discord-webhook`, never committed or pushed.

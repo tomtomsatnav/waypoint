@@ -137,5 +137,6 @@ case "${1:-start}" in
   serve) "$HERE/blind-serve.sh" start "$WORK" ;;
   reveal) "$HERE/blind-serve.sh" reveal "$WORK" ;;
   note) shift; (cd "$WORK/autopilot" && node "$WP/bin/waypoint.mjs" autopilot note "$@") ;;
+  discord) shift; (cd "$WORK/autopilot" && node "$WP/bin/waypoint.mjs" autopilot discord "$@") ;;
   *) sed -n 2,16p "$HERE/run-e13.sh" ;;
 esac

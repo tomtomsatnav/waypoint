@@ -38,7 +38,8 @@ if (/^You are the planner/.test(p)) {
   if (process.env.FAKE_AP_ACCEPT) { mkdirSync('tests', { recursive: true }); writeFileSync('tests/accept.test.mjs', '// acceptance\n'); }
   done('plan'); usage(); result(); process.exit(0);
 }
-if (/^You are the tester/.test(p)) { writeFileSync(m(/3\. Write (\S+) in Markdown/), '# Tester report\n- works: everything tried (shot: a.png)\n'); done('tester'); usage(); result(); process.exit(0); }
+if (/^You are the tester/.test(p)) { writeFileSync(m(/3\. Write (\S+) in Markdown/), '# Tester report\n- works: everything tried (shot: a.png)\n');
+  const sd = m(/Save screenshots of what you see into (\S+) \(PNG/); if (sd) { mkdirSync(sd, { recursive: true }); writeFileSync(join(sd, '01-title.png'), Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex')); } done('tester'); usage(); result(); process.exit(0); }
 if (/reviewer/.test(p) && process.env.FAKE_AP_REVIEW_LIMIT_ONCE && !existsSync(process.env.FAKE_AP_REVIEW_LIMIT_ONCE)) {
   writeFileSync(process.env.FAKE_AP_REVIEW_LIMIT_ONCE, '1'); done('review-limited');
   out({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', unifiedWindows: { five_hour: { utilization: 1, resetsAt: Date.now() / 1000 + 1, status: 'rejected' }, seven_day: { utilization: 0.3, resetsAt: Date.now() / 1000 + 86400, status: 'allowed' } } } });
