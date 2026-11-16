@@ -111,3 +111,12 @@ test('autopilot: the technical research looks for hard problems, tools, referenc
   assert.match(p, /advice, not requirements/);
   assert.doesNotMatch(planPrompt({ brief: 'b' }, '/x/m.json'), /APPROACH\.md/, 'only when the research wrote one');
 });
+
+test('autopilot: the prompts show only the wording for a new or an existing project, never template text', () => {
+  const e = planPrompt({ brief: 'b', existing: { files: 4, commits: 1 } }, '/x/m.json');
+  const n = planPrompt({ brief: 'b' }, '/x/m.json');
+  for (const p of [e, n, researchPrompt({ brief: 'b' }), researchPrompt({ brief: 'b', existing: {} }), approachPrompt({ brief: 'b' })])
+    assert.doesNotMatch(p, /\$\{/, 'no unevaluated template text');
+  assert.match(e, /ALREADY UNDER WAY/); assert.match(e, /most valuable next step/); assert.doesNotMatch(e, /thin slice/);
+  assert.match(n, /thin slice/); assert.doesNotMatch(n, /most valuable next step|ALREADY UNDER WAY/);
+});

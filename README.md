@@ -1,5 +1,16 @@
 # waypoint
 
+## As a Claude Code plugin
+
+```
+/plugin install waypoint --marketplace tomtomsatnav/waypoint
+```
+
+Two skills: **waypoint** (Claude writes a brief with you, starts and steers the autopilot, shows the dashboard and relays
+notes) and **expectations** (before building anything from a description, write down what users of that kind of product
+expect, each with a check, then build to it). To share only the framework, without this repository's experiments, run
+`scripts/export/export-framework.sh <new folder>` and publish that.
+
 ## Start here: `waypoint build`
 
 To build something from a brief, run this in a git repo that holds the brief:
