@@ -12,7 +12,21 @@ Two ways to use it:
 | `waypoint build` | A short research pass writes down what users of this kind of thing expect but the brief doesn't say, then one Claude Code session builds it | Projects that fit in one long session; quick and cheap |
 | `waypoint autopilot` | A strong model researches, plans milestones and reviews; cheaper models build one checked task at a time; a tester plays each milestone; it runs until it ships | Big projects (days of work), or anything you want to steer while it runs |
 
-## Install as a Claude Code plugin (recommended)
+## The easy way: the launcher
+
+Double-click **`Waypoint.command`** in the waypoint folder (on a Mac; elsewhere run `node bin/app.mjs --open`). A page opens
+in your browser where you:
+
+1. say in a few lines what you want built, and drop in any reference images (with a word on what each is for);
+2. press **Write the brief for me**: Claude turns it into a full brief, which you can edit or revise with a sentence of
+   feedback (or write your own);
+3. pick a name and folder (a new one, or a folder that already has code in it to carry on from), optionally a Discord
+   webhook and a GitHub repository, and press **Start building**.
+
+The same page lists your projects: open each one's dashboard, send it a note, stop it or carry on after a restart. Closing
+the page or the launcher does not stop a build. Everything below is the same thing from the command line.
+
+## Install as a Claude Code plugin
 
 In Claude Code:
 
@@ -29,7 +43,7 @@ In Claude Code:
   kind of product expect that you didn't say (each with a check), then builds to it. The single change that helped most
   in testing; it needs nothing else from waypoint.
 
-Or use it directly from a clone, as below.
+Or use the launcher above, or the commands below.
 
 ## Needs
 
