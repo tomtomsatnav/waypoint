@@ -11,6 +11,12 @@ notes) and **expectations** (before building anything from a description, write 
 expect, each with a check, then build to it). To share only the framework, without this repository's experiments, run
 `scripts/export/export-framework.sh <new folder>` and publish that.
 
+## The launcher
+
+Double-click `Waypoint.command` (or `node bin/app.mjs --open`): a page to write a brief (Claude can draft it from a few
+lines), add reference images, pick a folder and options, start the autopilot, and list, steer, stop and resume projects.
+Projects started from the command line show up in it too.
+
 ## Start here: `waypoint build`
 
 To build something from a brief, run this in a git repo that holds the brief:

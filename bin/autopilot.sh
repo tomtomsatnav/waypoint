@@ -74,6 +74,7 @@ case "$cmd" in
     fi
     [ -n "$weekly" ] && args+=(--weekly-ceiling "$weekly")
     if alive_sup=$(pgrep -f "$SUP" 2>/dev/null) && [ -n "$alive_sup" ]; then echo "already running here; autopilot.sh status"; exit 0; fi
+    node "$WP/bin/app.mjs" --register "$PROJ" 2>/dev/null   # so the launcher lists it
     launch "${args[@]+"${args[@]}"}"
     if command -v caffeinate >/dev/null; then WAYPOINT_PROJECT="$PROJ" nohup caffeinate -ims "$HERE/autopilot.sh" _supervise "$PROJ" >> "$AP/supervise.log" 2>&1 < /dev/null &
     else WAYPOINT_PROJECT="$PROJ" nohup "$HERE/autopilot.sh" _supervise "$PROJ" >> "$AP/supervise.log" 2>&1 < /dev/null & fi

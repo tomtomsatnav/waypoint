@@ -20,6 +20,12 @@ own), ask the user where waypoint is cloned, or clone it for them with their per
 Check the essentials once: `node --version` (18 or newer), `git`, and `claude` logged in to the user's plan. The first
 start installs Playwright and Chromium into `~/.waypoint/tools`; tell the user it will take a minute.
 
+## If the user would rather click than type
+
+Offer the launcher: `node $WP/bin/app.mjs --open` (on a Mac, double-clicking `Waypoint.command` in `$WP` does the same).
+It opens a page where they describe the project, get a drafted brief, add images, choose a folder and start; it also lists
+their projects with dashboards, notes, stop and carry on. Projects you start below appear there too.
+
 ## Starting a run
 
 All commands run in the project's folder, which must be a git repository with at least one commit (offer to `git init`
