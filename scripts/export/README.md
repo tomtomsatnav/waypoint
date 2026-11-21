@@ -21,7 +21,9 @@ in your browser where you:
 2. press **Write the brief for me**: Claude turns it into a full brief, which you can edit or revise with a sentence of
    feedback (or write your own);
 3. pick a name and folder (a new one, or a folder that already has code in it to carry on from), optionally a Discord
-   webhook and a GitHub repository, and press **Start building**.
+   webhook, and press **Start building**. If the [GitHub CLI](https://cli.github.com) is installed and signed in
+   (`brew install gh`, then `gh auth login`, once), it also makes a private GitHub repository for the project and
+   pushes the work there every few minutes.
 
 The same page lists your projects: open each one's dashboard, send it a note, stop it or carry on after a restart. Closing
 the page or the launcher does not stop a build. Everything below is the same thing from the command line.

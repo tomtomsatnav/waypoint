@@ -72,7 +72,9 @@ details summary{cursor:pointer;font-weight:600;margin-top:16px}
 <details><summary>Updates and options</summary>
 <label>Discord webhook <span class="dim">optional: posts milestones and screenshots to a channel (channel settings → Integrations → Webhooks → New Webhook → Copy URL). Stays on this computer</span></label>
 <input type="password" id="discord" placeholder="https://discord.com/api/webhooks/…" autocomplete="off">
-<label>GitHub repository <span class="dim">optional: an empty repository to push the work to every few minutes</span></label>
+<label><input type="checkbox" id="ghauto" checked> Make a private GitHub repository for it <span class="dim">the work is pushed there every few minutes</span></label>
+<div id="ghstate" class="dim small"></div>
+<label>Or use a repository you already have <span class="dim">optional: an empty one</span></label>
 <input type="url" id="github" placeholder="https://github.com/you/farming-game.git">
 <div class="row">
  <div class="grow"><label>Weekly plan usage it may use <span id="wv" class="dim">85%</span></label><input type="range" id="weekly" min="30" max="100" value="85" style="width:100%"></div>
@@ -104,6 +106,10 @@ async function refresh() {
   if (!KEY) return;
   let d; try { d = await api('/api/projects'); } catch (e) { $('list').innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; return; }
   home = d.home;
+  const g = d.gh || {}; $('ghstate').innerHTML = g.loggedIn ? 'Signed in to GitHub' + (g.user ? ' as ' + esc(g.user) : '') + '.'
+    : g.installed ? '<span class="err">The GitHub CLI is not signed in: run <code>gh auth login</code> in Terminal once.</span>'
+    : '<span class="err">Needs the GitHub CLI once: in Terminal, <code>brew install gh</code> then <code>gh auth login</code>.</span>';
+  if (!g.loggedIn && !$('ghauto').dataset.touched) $('ghauto').checked = false;
   const short = (p) => p.startsWith(home) ? '~' + p.slice(home.length) : p;
   $('list').innerHTML = d.projects.length ? d.projects.map((p) => {
     const cls = 's-' + (p.status === 'not started' ? 'not' : p.status);
@@ -112,6 +118,8 @@ async function refresh() {
     if (p.managed && !live && p.status !== 'finished' && p.status !== 'missing') acts.push('<button class="primary" data-act="start" data-p="' + esc(p.path) + '">' + (p.status === 'not started' ? 'Start' : 'Carry on') + '</button>');
     if (p.managed && live) acts.push('<button data-act="stop" data-p="' + esc(p.path) + '">Stop</button>');
     if (live) acts.push('<button data-act="note" data-p="' + esc(p.path) + '">Send a note</button>');
+    if (p.origin) acts.unshift('<a class="btn" href="' + esc(p.origin.replace(/^git@github\.com:/, 'https://github.com/')) + '" target="_blank">GitHub</a>');
+    else if (p.managed && p.status !== 'missing') acts.push('<button data-act="github" data-p="' + esc(p.path) + '" title="Make a private GitHub repository and push to it">+ GitHub</button>');
     acts.push('<button data-act="remove" data-p="' + esc(p.path) + '" title="Remove from this list (the folder is kept)">×</button>');
     const showLaunch = (p.status === 'starting' || p.status === 'not started' || p.status === 'stopped') && p.launch.length;
     return '<div class="card proj"><div><span class="name">' + esc(p.name) + '</span><span class="pill ' + cls + '">' + esc(LABEL[p.status] || p.status) + '</span>'
@@ -131,6 +139,7 @@ document.addEventListener('click', async (e) => {
   try {
     if (b.dataset.act === 'dash') { const w = window.open('about:blank'); const r = await api('/api/dashboard', { path }); w.location = r.url;
       if (r.phone) b.title = 'On your phone (same Wi-Fi): ' + r.phone; }
+    if (b.dataset.act === 'github') { b.disabled = true; b.textContent = 'making…'; const r = await api('/api/github', { path }); alert('Made ' + r.url + ' (private). The work is pushed there every few minutes.'); }
     if (b.dataset.act === 'start') { b.disabled = true; await api('/api/start', { path }); }
     if (b.dataset.act === 'stop') { if (!confirm('Stop this build? Nothing is lost; Carry on picks it up again.')) return; b.disabled = true; await api('/api/stop', { path }); }
     if (b.dataset.act === 'remove') { if (!confirm('Remove it from this list? The folder and the build are not touched.')) return; await api('/api/remove', { path }); }
@@ -147,6 +156,7 @@ $('cancel').onclick = () => $('newcard').classList.add('hidden');
 $('addbtn').onclick = () => { $('addcard').classList.toggle('hidden'); $('newcard').classList.add('hidden'); };
 $('addgo').onclick = async () => { try { await api('/api/add', { folder: $('addpath').value }); $('addmsg').innerHTML = '<span class="ok">added</span>'; $('addpath').value = ''; refresh(); }
   catch (e) { $('addmsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; } };
+$('ghauto').onchange = () => { $('ghauto').dataset.touched = 1; };
 $('weekly').oninput = () => { $('wv').textContent = $('weekly').value + '%'; };
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 let folderTouched = false; $('folder').oninput = () => { folderTouched = true; };
@@ -181,9 +191,10 @@ $('go').onclick = async () => {
   if (!brief) { $('gomsg').innerHTML = '<span class="err">Say what you want built first.</span>'; return; }
   nameFromBrief(); if (!$('name').value) { $('name').value = 'project'; $('name').oninput(); }
   $('go').disabled = true; $('gomsg').textContent = 'Setting up…';
-  try { await api('/api/create', { name: $('name').value, folder: $('folder').value, brief, references: refs.map((r) => ({ name: r.name, data: r.data, caption: r.caption })),
-      discord: $('discord').value, github: $('github').value, weekly: $('weekly').value / 100, workers: $('workers').value, hours: $('hours').value });
-    $('gomsg').textContent = ''; $('banner').innerHTML = '<div class="card"><span class="ok">Started.</span> The first start installs a browser for the tester, which takes a minute. Research and planning come first, so the first code appears after a while. Press Dashboard on the project to watch.</div>';
+  try { const made = await api('/api/create', { name: $('name').value, folder: $('folder').value, brief, references: refs.map((r) => ({ name: r.name, data: r.data, caption: r.caption })),
+      discord: $('discord').value, github: $('github').value, createGithub: $('ghauto').checked && !$('github').value.trim(), weekly: $('weekly').value / 100, workers: $('workers').value, hours: $('hours').value });
+    $('gomsg').textContent = ''; $('banner').innerHTML = '<div class="card"><span class="ok">Started.</span> The first start installs a browser for the tester, which takes a minute. Research and planning come first, so the first code appears after a while. Press Dashboard on the project to watch.'
+      + (made.project.github ? (made.project.github.url ? '<br>GitHub: <a href="' + esc(made.project.github.url) + '" target="_blank">' + esc(made.project.github.url) + '</a> (private)' : '<br><span class="err">No GitHub repository: ' + esc(made.project.github.error) + '</span>') : '') + '</div>';
     $('newcard').classList.add('hidden'); ['idea', 'brief', 'name', 'folder', 'discord', 'github', 'feedback'].forEach((id) => $(id).value = ''); refs.length = 0; drawRefs(); folderTouched = false; refresh(); }
   catch (e) { $('gomsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
   finally { $('go').disabled = false; }

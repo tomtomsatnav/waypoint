@@ -15,6 +15,16 @@ async function launcher() {
   // A stand-in autopilot.sh that records how it was called, and a stand-in claude that drafts a brief.
   writeFileSync(join(bin, 'autopilot.sh'), `#!/bin/bash\necho "$PWD|$*" >> "${dir}/calls"\n`); chmodSync(join(bin, 'autopilot.sh'), 0o755);
   writeFileSync(join(bin, 'claude'), '#!/bin/bash\ncat > /dev/null\nprintf "# Lantern Farm\\n\\nA farming game.\\n\\n## Done means\\nYou can farm.\\n"\n'); chmodSync(join(bin, 'claude'), 0o755);
+  // A stand-in GitHub CLI: logged in; "farm" is taken, so the launcher has to pick another name.
+  writeFileSync(join(bin, 'gh'), `#!/bin/bash
+if [ "$1 $2" = "auth status" ]; then echo "Logged in to github.com account tester"; exit 0; fi
+if [ "$1 $2" = "repo create" ]; then
+  [ "$3" = "farm" ] && { echo "GraphQL: Name already exists on this account" >&2; exit 1; }
+  name="$3"; src=""; while [ $# -gt 0 ]; do [ "$1" = "--source" ] && src="$2"; shift; done
+  git -C "$src" remote add origin "https://github.com/tester/$name.git"; exit 0
+fi
+exit 1
+`); chmodSync(join(bin, 'gh'), 0o755);
   const port = 3900 + Math.floor(Math.random() * 500);
   const p = spawn(process.execPath, [join(ROOT, 'bin', 'app.mjs'), '--port', String(port)], {
     env: { ...process.env, WAYPOINT_HOME: home, WAYPOINT_AUTOPILOT_SH: join(bin, 'autopilot.sh'), PATH: `${bin}:${process.env.PATH}`,
@@ -38,9 +48,11 @@ test('launcher: needs its key, drafts a brief, creates and starts a project', as
     assert.equal(d.body.ok, true); assert.match(d.body.brief, /^# Lantern Farm/);
 
     const folder = join(L.dir, 'farm');
-    const c = await L.call('/api/create', { name: 'farm', folder, brief: d.body.brief, weekly: 0.9, workers: 2,
+    const c = await L.call('/api/create', { name: 'farm', folder, brief: d.body.brief, weekly: 0.9, workers: 2, createGithub: true,
       references: [{ name: 'look.png', data: PNG, caption: 'the palette' }, { name: 'evil.sh', data: 'eA==' }] });
     assert.equal(c.status, 200, JSON.stringify(c.body));
+    assert.equal(c.body.project.github.url, 'https://github.com/tester/farm-2');
+    assert.equal((await L.call('/api/projects')).body.gh.user, 'tester');
     assert.ok(existsSync(join(folder, 'references', 'look.png')));
     assert.ok(!existsSync(join(folder, 'references', 'evil.sh')));
     const brief = readFileSync(join(folder, 'BRIEF.md'), 'utf8');
@@ -53,6 +65,7 @@ test('launcher: needs its key, drafts a brief, creates and starts a project', as
 
     const list = (await L.call('/api/projects')).body.projects;
     assert.equal(list.length, 1); assert.equal(list[0].path, folder); assert.equal(list[0].port, 3101);
+    assert.equal(list[0].origin, 'https://github.com/tester/farm-2');
 
     assert.equal((await L.call('/api/create', { folder: join(L.dir, 'x') })).status, 400);   // no brief
     await L.call('/api/remove', { path: folder });
@@ -71,5 +84,7 @@ test('launcher: an existing project keeps its own BRIEF.md and history', async (
     assert.equal(readFileSync(join(folder, 'BRIEF.md'), 'utf8'), '# old brief\n');
     assert.match(readFileSync(join(folder, 'WAYPOINT-BRIEF.md'), 'utf8'), /checkout flow/);
     assert.equal(execFileSync('git', ['-C', folder, 'rev-list', '--count', 'HEAD'], { encoding: 'utf8' }).trim(), '2');
+    const g = await L.call('/api/github', { path: folder });   // the + GitHub button on an existing project
+    assert.equal(g.status, 200, JSON.stringify(g.body)); assert.equal(g.body.url, 'https://github.com/tester/shop');
   } finally { L.stop(); }
 });

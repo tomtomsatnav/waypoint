@@ -59,7 +59,7 @@ function info(p) {
   const status = !existsSync(p.path) ? 'missing' : st?.finished && !['plan-failed', 'review-failed'].includes(st.finished) ? 'finished'
     : running ? (/pausing until/.test(last) ? 'paused' : 'running') : st ? 'stopped' : launching.has(p.path) ? 'starting' : 'not started';
   return { ...p, managed, status, supervisor, milestone: ms ? `milestone ${ms.n}: ${ms.title}` : null, now: running ? last.slice(0, 200) : null,
-    finished: st?.finished || null, launch: tailOf(join(HOME, 'logs', `${basename(p.path)}-launch.log`), 6) };
+    finished: st?.finished || null, origin: existsSync(p.path) ? (git(p.path, 'remote', 'get-url', 'origin').stdout || '').trim().replace(/\.git$/, '') || null : null, launch: tailOf(join(HOME, 'logs', `${basename(p.path)}-launch.log`), 6) };
 }
 
 // --- actions -------------------------------------------------------------------------------------------------------
@@ -101,7 +101,9 @@ export function createProject(o) {
   }
   commit(path, existing ? 'waypoint: brief for the autopilot' : 'Brief');
   const gh = String(o.github || '').trim();
+  let github = null;
   if (gh && git(path, 'remote', 'get-url', 'origin').status !== 0) git(path, 'remote', 'add', 'origin', gh);
+  else if (o.createGithub && git(path, 'remote', 'get-url', 'origin').status !== 0) github = makeGithubRepo(path, o.name || basename(path));
   const hook = String(o.discord || '').trim();
   if (hook) { mkdirSync(join(path, '.git', 'autopilot'), { recursive: true }); setWebhook(join(path, '.git', 'autopilot'), hook); }
   const args = [];
@@ -112,7 +114,32 @@ export function createProject(o) {
   if (o.hours && Number(o.hours) > 0) args.push('--hours', String(Number(o.hours)));
   const p = register(path, o.name);
   startProject(path, args);
-  return p;
+  return { ...p, github };
+}
+
+// GitHub, through the GitHub CLI (gh) the user is logged in to: is it there, and make a private repository for a project.
+let ghCache = null;
+export function ghStatus() {
+  if (ghCache && Date.now() - ghCache.at < 60e3) return ghCache.s;
+  const r = spawnSync('gh', ['auth', 'status'], { encoding: 'utf8' });
+  const s = r.error ? { installed: false, loggedIn: false } : { installed: true, loggedIn: r.status === 0,
+    user: ((r.stdout || '') + (r.stderr || '')).match(/account (\S+)/)?.[1] || null };
+  ghCache = { at: Date.now(), s }; return s;
+}
+export function makeGithubRepo(path, name) {
+  const s = ghStatus();
+  if (!s.installed) return { error: 'the GitHub CLI is not installed (brew install gh, then gh auth login)' };
+  if (!s.loggedIn) return { error: 'the GitHub CLI is not logged in (run gh auth login in Terminal once)' };
+  if (git(path, 'remote', 'get-url', 'origin').status === 0) return { url: git(path, 'remote', 'get-url', 'origin').stdout.trim() };
+  const base = slug(name); let last = '';
+  for (let i = 1; i <= 9; i++) {
+    const n = i === 1 ? base : `${base}-${i}`;
+    const r = spawnSync('gh', ['repo', 'create', n, '--private', '--source', path, '--remote', 'origin', '--push'], { cwd: path, encoding: 'utf8' });
+    if (r.status === 0) return { url: git(path, 'remote', 'get-url', 'origin').stdout.trim().replace(/\.git$/, ''), name: n };
+    last = (r.stderr || r.stdout || '').trim();
+    if (!/already exists/i.test(last)) break;
+  }
+  return { error: `could not make the repository: ${last.slice(-300)}` };
 }
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
 
@@ -174,7 +201,9 @@ function suggestFolders() {
 }
 
 const routes = {
-  'GET /api/projects': () => ({ projects: projects().map(info), found: suggestFolders(), home: homedir() }),
+  'GET /api/projects': () => ({ projects: projects().map(info), found: suggestFolders(), home: homedir(), gh: ghStatus() }),
+  'POST /api/github': (b) => { const p = projects().find((x) => x.path === b.path); if (!p) throw new Error('unknown project');
+    const r = makeGithubRepo(p.path, p.name); if (r.error) throw new Error(r.error); return { ok: true, ...r }; },
   'POST /api/draft': (b) => draftBrief(b),
   'POST /api/create': (b) => ({ ok: true, project: createProject(b) }),
   'POST /api/add': (b) => { const p = expand(b.folder); if (!existsSync(p)) throw new Error(`${p} does not exist`); return { ok: true, project: register(p) }; },
