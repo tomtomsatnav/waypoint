@@ -1,0 +1,15 @@
+{
+  "about": "Which model builds what. ladders: per task type, the builders tried in order (each failed attempt steps up one). skip: a rung whose learned success rate for a type falls below minRate after minAttempts attempts is skipped (the last rung never is). build: the models waypoint build uses.",
+  "ladders": {
+    "code-simple": ["haiku", "sonnet"],
+    "code-moderate": ["haiku", "sonnet"],
+    "code-complex": ["haiku", "sonnet", "opus"],
+    "test-writing": ["haiku", "sonnet"],
+    "docs": ["haiku", "sonnet"],
+    "architecture": ["sonnet", "opus"],
+    "ui-design": ["sonnet", "opus"],
+    "visual-polish": ["sonnet", "opus"]
+  },
+  "skip": { "minAttempts": 3, "minRate": 0.5 },
+  "build": { "model": "sonnet", "researchModel": "sonnet" }
+}

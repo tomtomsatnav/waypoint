@@ -6,7 +6,7 @@ HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/../.." && pwd)
 DEST=${1:?usage: export-framework.sh <new folder>}
 [ -e "$DEST" ] && [ -n "$(ls -A "$DEST" 2>/dev/null)" ] && { echo "$DEST is not empty"; exit 1; }
 mkdir -p "$DEST"
-git -C "$WP" archive HEAD Waypoint.command bin lib test scripts skills .claude-plugin package.json .gitignore | tar -x -C "$DEST"
+git -C "$WP" archive HEAD Waypoint.command bin lib prompts config test scripts skills .claude-plugin package.json .gitignore | tar -x -C "$DEST"
 rm -rf "$DEST/scripts/export"
 cp "$HERE/README.md" "$DEST/README.md"
 grep -qx '.waypoint/' "$DEST/.gitignore" 2>/dev/null || printf '.waypoint/\n' >> "$DEST/.gitignore"
