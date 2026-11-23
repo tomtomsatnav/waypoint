@@ -24,7 +24,7 @@ run(async (repo, check) => {
         ok(got.length === want.length, `${got.length} rows, expected ${want.length}`);
         got.forEach(([r, v], i) => { ok(r === want[i][0], `row ${i + 1} is ${r}, expected ${want[i][0]}`); ok(Math.abs(num(v) - want[i][1]) < 0.01, `${r}: ${v}, expected ${money(want[i][1])}`); }); });
       await check('each region shows its share', async () => { const p = await open(); const want = byRegion(rows); const total = sum(rows);
-        const texts = await p.$$eval('[data-testid=region-row]', (els) => els.map((e) => e.textContent));
+        const texts = await p.$$eval('[data-testid=region-row]', (els) => els.map((e) => [...e.children].map((c) => c.textContent).join(' ')));
         texts.forEach((t, i) => { const pct = Math.round(want[i][1] / total * 100); ok(new RegExp(`\\b(${pct}|${pct - 1}|${pct + 1})(\\.\\d+)?\\s?%`).test(t), `"${t.trim().slice(0, 80)}" has no share near ${pct}%`); }); });
       await check('month filter lists every month and updates the total and table', async () => { const p = await open();
         const opts = await p.$$eval('[data-testid=month-filter] option', (o) => o.map((x) => x.value));
@@ -41,4 +41,4 @@ run(async (repo, check) => {
         const w = await p.evaluate(() => document.documentElement.scrollWidth); ok(w <= 380, `page is ${w}px wide on a 375px screen`); });
     });
   } finally { srv.close(); }
-});
+}, 7);

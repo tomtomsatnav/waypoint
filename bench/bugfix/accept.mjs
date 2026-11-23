@@ -23,4 +23,4 @@ run(async (repo, check) => {
     const files = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.name === 'node_modules' || e.name.startsWith('.') ? [] : e.isDirectory() ? files(join(d, e.name)) : /\.test\.m?js$/.test(e.name) ? [join(d, e.name)] : []);
     const n = files(repo).reduce((a, f) => a + (readFileSync(f, 'utf8').match(/\btest\s*\(|\bit\s*\(/g) || []).length, 0);
     ok(n >= 7, `${n} tests in the repo; expected the 3 existing ones plus one per reported problem`); });
-});
+}, 8);

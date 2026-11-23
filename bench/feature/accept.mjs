@@ -20,12 +20,12 @@ run(async (repo, check) => {
     const r = todo(f, 'remove', '3'); ok(r.code === 0, `remove exit ${r.code}`); todo(f, 'remove', '1'); todo(f, 'add', 'd');
     const l = lines(todo(f, 'list').out); ok(l[0] === '2. [ ] b' && l[1] === '4. [ ] d', JSON.stringify(l)); });
   await check('an unknown id: message on stderr, exit 1, nothing changed', async () => { const f = fresh(); todo(f, 'add', 'a'); const before = readFileSync(f, 'utf8');
-    for (const c of ['done', 'undo', 'remove']) { const r = todo(f, c, '9'); ok(r.code === 1 && r.err.trim(), `${c} 9 -> exit ${r.code}, stderr "${r.err}"`); }
-    ok(readFileSync(f, 'utf8') === before, 'the file changed'); });
+    for (const c of ['done', 'undo', 'remove']) { const r = todo(f, c, '9'); ok(r.code === 1 && /\b9\b/.test(r.err), `${c} 9 -> exit ${r.code}, stderr "${r.err}"`); }
+    ok(readFileSync(f, 'utf8') === before, 'the file changed'); ok(todo(f, 'done', '1').code === 0, 'done on an existing id failed'); });
   await check('help lists the commands', async () => { const f = fresh(); const r = todo(f, 'help'); const t = r.out + r.err;
     ok(r.code === 0 && ['add', 'list', 'done', 'undo', 'remove'].every((c) => t.includes(c)), `help: ${t.slice(0, 200)}`); });
   await check('the repo has tests for the new commands, and they pass', async () => {
     const { spawnSync } = await import('node:child_process'); const r = spawnSync('node', ['--test'], { cwd: repo, encoding: 'utf8', timeout: 60000 });
     ok(r.status === 0 && /# pass [1-9]/.test(r.stdout), `node --test: ${(r.stdout + r.stderr).slice(-300)}`);
     ok(/done/.test(readFileSync(join(repo, 'README.md'), 'utf8')), 'README does not mention done'); });
-});
+}, 8);

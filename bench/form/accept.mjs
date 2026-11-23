@@ -23,7 +23,8 @@ run(async (repo, check) => {
         await p.fill('#password', 'lantern42'); await p.locator('#password').blur(); ok(!(await errText(p, 'password')), 'good password rejected'); });
       await check('confirm must match', async () => { const p = await page(srv.url); await fillAll(p, { confirm: 'lantern43' }); ok(await errText(p, 'confirm'), 'mismatch accepted'); });
       await check('age is a whole number from 13 to 120', async () => { const p = await page(srv.url);
-        for (const bad of ['12', '121', '20.5', 'abc']) { await p.fill('#age', bad); await p.locator('#age').blur(); ok(await errText(p, 'age'), `age "${bad}" accepted`); }
+        const numberInput = (await p.getAttribute('#age', 'type')) === 'number'; // the browser itself refuses letters there
+        for (const bad of ['12', '121', '20.5', ...(numberInput ? [] : ['abc'])]) { await p.fill('#age', bad); await p.locator('#age').blur(); ok(await errText(p, 'age'), `age "${bad}" accepted`); }
         for (const good of ['13', '120']) { await p.fill('#age', good); await p.locator('#age').blur(); ok(!(await errText(p, 'age')), `age "${good}" rejected`); } });
       await check('submit disabled until everything is valid, terms included', async () => { const p = await page(srv.url);
         ok(await p.isDisabled('#submit'), 'enabled on an empty form'); await fillAll(p, { terms: false }); ok(await p.isDisabled('#submit'), 'enabled without terms');
@@ -34,4 +35,4 @@ run(async (repo, check) => {
         for (const id of ['email', 'password', 'confirm', 'age', 'terms']) { const n = await p.evaluate((id) => { const el = document.getElementById(id); return (el.labels?.length || 0) + (el.getAttribute('aria-label') ? 1 : 0) + (el.getAttribute('aria-labelledby') ? 1 : 0); }, id); ok(n > 0, `#${id} has no label`); } });
     });
   } finally { srv.close(); }
-});
+}, 9);

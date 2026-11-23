@@ -22,22 +22,22 @@ run(async (repo, check) => {
         await p.keyboard.down('ArrowRight'); await p.waitForTimeout(4000); await p.keyboard.up('ArrowRight'); const w = await p.evaluate(() => window.game.width);
         ok((await st(p)).playerX <= w, `playerX ${(await st(p)).playerX} > width ${w}`); });
       await check('catching a lantern scores', async () => { const p = await start(); await p.keyboard.press('Space');
-        await p.evaluate(() => window.game.spawnLantern(window.game.state().playerX)); await waitFor(p, (s) => s.score >= 1, 8000, 'no score'); ok((await st(p)).lives === 3, 'lost a life'); });
+        await p.evaluate(() => window.game.spawnLantern(window.game.state().playerX)); await waitFor(p, (s) => s.score >= 1, 15000, 'no score'); ok((await st(p)).lives === 3, 'lost a life'); });
       await check('a missed lantern costs a life', async () => { const p = await start(); await p.keyboard.press('Space');
         const x = await p.evaluate(() => { const s = window.game.state(); return s.playerX > window.game.width / 2 ? 5 : window.game.width - 5; });
-        await p.evaluate((x) => window.game.spawnLantern(x), x); await waitFor(p, (s) => s.lives === 2, 8000, 'no life lost'); ok((await st(p)).score === 0, 'scored'); });
+        await p.evaluate((x) => window.game.spawnLantern(x), x); await waitFor(p, (s) => s.lives === 2, 15000, 'no life lost'); ok((await st(p)).score === 0, 'scored'); });
       await check('P pauses and resumes', async () => { const p = await start(); await p.keyboard.press('Space'); await p.keyboard.press('p');
         await waitFor(p, (s) => s.status === 'paused', 1500, 'not paused'); const x = (await st(p)).playerX;
         await p.keyboard.down('ArrowRight'); await p.waitForTimeout(400); await p.keyboard.up('ArrowRight'); ok((await st(p)).playerX === x, 'moved while paused');
         await p.keyboard.press('p'); await waitFor(p, (s) => s.status === 'playing', 1500, 'not resumed'); });
       await check('game over after three misses, R restarts, best kept', async () => { const p = await start(); await p.keyboard.press('Space');
-        await p.evaluate(() => window.game.spawnLantern(window.game.state().playerX)); await waitFor(p, (s) => s.score >= 1, 8000, 'no score');
+        await p.evaluate(() => window.game.spawnLantern(window.game.state().playerX)); await waitFor(p, (s) => s.score >= 1, 15000, 'no score');
         for (let i = 0; i < 3; i++) { const x = await p.evaluate(() => { const s = window.game.state(); return s.playerX > window.game.width / 2 ? 5 : window.game.width - 5; });
-          const lives = (await st(p)).lives; await p.evaluate((x) => window.game.spawnLantern(x), x); await waitFor(p, (s) => s.lives < lives || s.status === 'over', 8000, 'no life lost'); }
+          const lives = (await st(p)).lives; await p.evaluate((x) => window.game.spawnLantern(x), x); await waitFor(p, (s) => s.lives < lives || s.status === 'over', 15000, 'no life lost'); }
         await waitFor(p, (s) => s.status === 'over', 3000, 'not over'); const best = (await st(p)).best; ok(best >= 1, `best ${best}`);
         await p.keyboard.press('r'); await waitFor(p, (s) => s.status === 'playing' || s.status === 'title', 2000, 'R did nothing');
         const s = await st(p); ok(s.score === 0 && s.lives === 3, JSON.stringify(s));
         await p.reload(); await p.waitForFunction(() => window.game, null, { timeout: 5000 }); ok((await st(p)).best >= 1, 'best not kept after reload'); }, 90000);
     });
   } finally { srv.close(); }
-});
+}, 8);

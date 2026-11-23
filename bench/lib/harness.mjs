@@ -13,7 +13,8 @@ import { spawn, spawnSync } from 'node:child_process';
 export function ok(cond, msg) { if (!cond) throw new Error(msg); }
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function run(body) {
+// total: how many checks the brief has, so a build that fails before the checks start scores 0 of them, not 0 of 1.
+export async function run(body, total = 0) {
   const repo = resolve(process.argv[2] || '.');
   const results = [];
   const check = async (name, f, timeoutMs = 60000) => {
@@ -25,6 +26,7 @@ export async function run(body) {
     finally { clearTimeout(timer); }
   };
   try { await body(repo, check); } catch (e) { results.push({ name: 'harness', ok: false, detail: String(e?.message || e).slice(0, 300) }); }
+  for (let i = results.filter((r) => r.name !== 'harness').length; i < total; i++) if (results.length < total) results.push({ name: `check ${i + 1} (not reached)`, ok: false, detail: 'the build could not be checked' });
   process.stdout.write(JSON.stringify({ checks: results }) + '\n');
   process.exit(0);
 }

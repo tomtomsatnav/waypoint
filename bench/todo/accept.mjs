@@ -39,4 +39,4 @@ run(async (repo, check) => {
         ok(await items(p).nth(1).locator('[data-testid=todo-toggle]').isChecked(), 'done state lost'); });
     });
   } finally { srv.close(); }
-});
+}, 9);

@@ -30,4 +30,4 @@ run(async (repo, check) => {
     await check('survives a restart', async () => { await srv.stop(); srv = await startServer('node', ['server.mjs'], { cwd: repo, port, env: { DATA_FILE: data }, path: '/notes' });
       const r = await api('GET', '/notes'); ok(r.json?.length === 1 && r.json[0].body === 'Buy lots of oil', JSON.stringify(r.json)); });
   } finally { await srv.stop(); }
-});
+}, 8);
