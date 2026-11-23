@@ -14,6 +14,7 @@
 #   autopilot.sh discord <webhook url> | test | off
 #   autopilot.sh dashboard [--lan]         the dashboard for this project (prints its private link)
 #   autopilot.sh stop
+#   autopilot.sh improve [--rounds 1] [--budget-usd 60] --yes   waypoint improves itself on its benchmark (log|status|stop)
 # Set WAYPOINT_PROJECT to use another folder than the current one.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); WP=$(cd "$HERE/.." && pwd)
@@ -88,6 +89,20 @@ case "$cmd" in
     tail -n 3 "$AP/autopilot.log" 2>/dev/null ;;
   log) tail -n 40 -f "$AP/autopilot.log" ;;
   note|discord) (cd "$PROJ" && node "$WP/bin/waypoint.mjs" autopilot "$cmd" "$@") ;;
+  improve) # waypoint learns from its own runs (README: Improving waypoint); runs in the background, in waypoint's own folder
+    ILOG="$HOME/.waypoint/improve.log"; mkdir -p "$HOME/.waypoint"
+    case "${1:-}" in
+      log) tail -n 40 -f "$ILOG"; exit 0 ;;
+      status) pgrep -f "waypoint.mjs improve" >/dev/null && echo "improve: running" || echo "improve: not running"; tail -n 5 "$ILOG" 2>/dev/null; exit 0 ;;
+      stop) pkill -f "waypoint.mjs improve"; echo stopped; exit 0 ;;
+    esac
+    pgrep -f "waypoint.mjs improve" >/dev/null && { echo "already running: autopilot.sh improve log"; exit 0; }
+    plan=(); yes=""; for a in "$@"; do [ "$a" = "--yes" ] && yes=1 || plan+=("$a"); done
+    (cd "$WP" && node bin/waypoint.mjs improve "${plan[@]+"${plan[@]}"}" | head -1)   # the plan, without starting anything
+    [ -n "$yes" ] || { echo 'add --yes to start it'; exit 0; }
+    if command -v caffeinate >/dev/null; then (cd "$WP" && nohup caffeinate -ims node bin/waypoint.mjs improve "$@" >> "$ILOG" 2>&1 < /dev/null &)
+    else (cd "$WP" && nohup node bin/waypoint.mjs improve "$@" >> "$ILOG" 2>&1 < /dev/null &); fi
+    echo "started in the background; follow it with: autopilot.sh improve log" ;;
   dashboard) pkill -f "dashboard.mjs $PROJ" 2>/dev/null; nohup node "$WP/bin/dashboard.mjs" "$PROJ" "$@" > "$AP/dashboard.log" 2>&1 < /dev/null & sleep 2; cat "$AP/dashboard.log" ;;
   stop) pkill -f "$SUP"; for pid in $(ap_pids); do kill "$pid" 2>/dev/null; done; sleep 2
     for pid in $(pgrep -f "claude -p" 2>/dev/null); do case "$(cwd_of "$pid")" in "$PROJ"|"$PROJ"/*) kill "$pid" 2>/dev/null;; esac; done; echo stopped ;;

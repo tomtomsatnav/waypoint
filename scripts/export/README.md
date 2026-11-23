@@ -115,6 +115,16 @@ from there rather than starting over.
 - **GitHub**: if the project has an `origin` remote, the work is pushed every few minutes.
 - **A revised brief**: edit `BRIEF.md` and run `start` again; the planner re-plans around the changes.
 
+## Improving waypoint
+
+waypoint can improve its own instructions to the models. `bin/autopilot.sh improve --rounds 1 --yes` (or the launcher's
+"Improving waypoint" card) measures the current version on a benchmark of eight small briefs, each scored by hidden
+acceptance checks; asks a strong model for one focused change to `prompts/`, `config/routing.json` or `skills/`, informed
+by the failures and by what your own projects ran into; measures again with the change; and, if it is better beyond the
+noise without the two held-out briefs getting worse, opens it as a draft pull request for you to review. Nothing else may
+change and nothing merges by itself. The first round makes 48 small builds and later ones 24, each capped at $5 and 25
+minutes; it pauses for your plan's limits. Without `--yes` it only prints the plan.
+
 ## Lower level
 
 `waypoint run --queue queue.json` runs a fixed queue of tasks with checks under the same finish line (no planner), and

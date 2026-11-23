@@ -1,0 +1,15 @@
+{
+  "about": "The benchmark waypoint improve measures changes against. Never edited by the improvement loop. heldOut briefs are never shown to the proposer: a change must not make them worse.",
+  "briefs": [
+    { "id": "todo", "kind": "web app" },
+    { "id": "game", "kind": "browser game" },
+    { "id": "dashboard", "kind": "data dashboard" },
+    { "id": "cli", "kind": "command-line tool" },
+    { "id": "api", "kind": "JSON API" },
+    { "id": "bugfix", "kind": "bug fix in an existing repo" },
+    { "id": "form", "kind": "form with validation", "heldOut": true },
+    { "id": "feature", "kind": "feature added to an existing repo", "heldOut": true }
+  ],
+  "perBriefBudgetUsd": 5,
+  "perBriefMinutes": 25
+}

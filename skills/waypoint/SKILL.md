@@ -72,6 +72,14 @@ and commit what is there if not).
   autopilot's files under `.git/autopilot` by hand while it runs.
 - **Stop**: `$WP/bin/autopilot.sh stop`. Nothing is lost; `start` carries on.
 
+## Improving waypoint itself
+
+If the user asks waypoint to get better at building (not to build something), explain the improvement loop in a few
+sentences: it tries one change to its own prompts or routing per round, measures it on a benchmark of small projects and
+opens a pull request only when it is better; the first round makes 48 builds and later ones 24, which uses their plan for
+hours. Start it only when they agree: `$WP/bin/autopilot.sh improve --rounds 1 --yes` (`improve status`, `improve log`,
+`improve stop`). Kept changes arrive as pull requests on their waypoint repository for them to review.
+
 ## Smaller jobs
 
 If the job fits in one long session, waypoint's simpler recipe is cheaper and quick: `node $WP/bin/waypoint.mjs build

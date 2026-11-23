@@ -183,6 +183,21 @@ async function dashboard(p) {
   return { url: `http://localhost:${p.port}/?key=${key}`, phone };
 }
 
+// waypoint improve's history: the baselines measured and each round's proposal, verdict and pull request.
+function benchHistory() {
+  const dir = join(HERE, '..', 'bench', 'results');
+  const files = existsSync(dir) ? readdirSync(dir) : [];
+  const rounds = files.filter((d) => existsSync(join(dir, d, 'round.json'))).sort().reverse().slice(0, 30).map((d) => {
+    const r = readJson(join(dir, d, 'round.json'), {});
+    return { id: r.id, at: r.at, title: r.title, verdict: r.verdict, reason: r.reason, before: r.baseline?.train ?? null, after: r.candidate?.train ?? null,
+      heldBefore: r.baseline?.held ?? null, heldAfter: r.candidate?.held ?? null, url: r.published?.url || null, note: r.published?.note || null };
+  });
+  const baselines = files.filter((f) => /^baseline-.*\.json$/.test(f)).map((f) => { const b = readJson(join(dir, f), {}); return { commit: (b.commit || '').slice(0, 7), at: b.at, runs: b.runs?.length || 0,
+    train: b.runs?.length ? b.runs.map((r) => { const t = r.results.filter((x) => !x.heldOut); return t.reduce((a, x) => a + x.score, 0) / (t.length || 1); }).reduce((a, x) => a + x, 0) / b.runs.length : null }; })
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  return { running: pids('waypoint.mjs improve').length > 0, log: tailOf(join(HOME, 'improve.log'), 4), rounds, baselines };
+}
+
 // --- server --------------------------------------------------------------------------------------------------------
 const KEY = (() => { const f = join(HOME, 'app-key'); try { const k = readFileSync(f, 'utf8').trim(); if (k) return k; } catch { /* first start */ }
   const k = randomBytes(12).toString('base64url'); mkdirSync(HOME, { recursive: true }); writeFileSync(f, k + '\n', { mode: 0o600 }); return k; })();
@@ -215,6 +230,14 @@ const routes = {
     const r = spawnSync(AUTOPILOT, ['stop'], { cwd: p.path, env: { ...process.env, WAYPOINT_PROJECT: p.path }, encoding: 'utf8' }); return { ok: r.status === 0 }; },
   'POST /api/note': (b) => { const p = projects().find((x) => x.path === b.path); if (!p) throw new Error('unknown project');
     addNote(apRoot(p.path).root, String(b.text || ''), { urgent: !!b.urgent }); return { ok: true }; },
+  'GET /api/bench': () => benchHistory(),
+  'POST /api/improve': (b) => {
+    if (pids('waypoint.mjs improve').length) throw new Error('a round is already running');
+    const args = ['improve', '--rounds', String(Math.max(1, Math.min(10, Number(b.rounds) || 1))), '--yes'];
+    if (Number(b.budget) > 0) args.push('--budget-usd', String(Number(b.budget)));
+    spawn(AUTOPILOT, args, { cwd: join(HERE, '..'), stdio: 'ignore', detached: true }).unref();
+    return { ok: true };
+  },
   'POST /api/dashboard': (b) => { const p = projects().find((x) => x.path === b.path); if (!p) throw new Error('unknown project'); return dashboard(p); },
 };
 

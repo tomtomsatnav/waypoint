@@ -87,6 +87,16 @@ details summary{cursor:pointer;font-weight:600;margin-top:16px}
 <div id="gomsg" class="msg"></div>
 </div>
 
+<div class="card" id="improvecard"><h2>Improving waypoint</h2>
+<div class="dim small">waypoint tries one change to its own instructions per round, builds a set of small test projects with and without it, and
+opens a pull request for you when it does better. The first round builds 48 small projects (it also measures the current
+version), later ones 24; each takes several hours of your plan.</div>
+<div id="improvestate" class="small" style="margin-top:10px"></div>
+<div style="overflow-x:auto"><table id="rounds" class="small" style="width:100%;border-collapse:collapse;margin-top:10px"></table></div>
+<div class="row" style="margin-top:12px"><label class="small" style="margin:0;font-weight:400">Rounds <input type="number" id="irounds" value="1" min="1" max="10" style="width:64px"></label>
+<label class="small" style="margin:0;font-weight:400">Stop at $ <input type="number" id="ibudget" placeholder="no limit" min="1" style="width:110px"></label>
+<button id="igo">Run</button></div></div>
+
 <p class="dim small">It keeps your Mac awake while it builds and pauses by itself near your plan's usage limits. Closing this page or the launcher does not stop a build. After a restart, open the launcher and press Start on the project to carry on.</p>
 </main>
 <script>
@@ -199,5 +209,22 @@ $('go').onclick = async () => {
   catch (e) { $('gomsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
   finally { $('go').disabled = false; }
 };
+const P = (x) => x == null ? '-' : (x * 100).toFixed(1) + '%';
+async function benchRefresh() {
+  if (!KEY) return; let d; try { d = await api('/api/bench'); } catch { return; }
+  const b = d.baselines[0];
+  $('improvestate').innerHTML = (d.running ? '<span class="pill s-running" style="margin:0 8px 0 0">running</span>' : '')
+    + (b ? 'Current score on the test projects: <b>' + P(b.train) + '</b> (version ' + esc(b.commit) + ', ' + b.runs + ' runs).' : 'Not measured yet.')
+    + (d.log.length ? '<div class="log">' + esc(d.log.join('\n')) + '</div>' : '');
+  $('igo').disabled = d.running;
+  $('rounds').innerHTML = d.rounds.length ? '<tr class="dim"><td>When</td><td>Change tried</td><td>Before → after</td><td>Result</td></tr>' + d.rounds.map((r) =>
+    '<tr style="border-top:1px solid var(--line)"><td>' + esc((r.at || '').slice(0, 10)) + '</td><td>' + esc(r.title || '') + '</td><td>' + P(r.before) + ' → ' + P(r.after)
+    + (r.heldBefore != null ? '<div class="dim">held out ' + P(r.heldBefore) + ' → ' + P(r.heldAfter) + '</div>' : '') + '</td><td>'
+    + (r.url ? '<a href="' + esc(r.url) + '" target="_blank">kept: pull request</a>' : '<span class="' + (r.verdict === 'kept' ? 'ok' : 'dim') + '">' + esc(r.verdict || '') + '</span>')
+    + (r.reason ? '<div class="dim">' + esc(r.reason) + '</div>' : '') + '</td></tr>').join('') : '';
+}
+$('igo').onclick = async () => { if (!confirm('Run ' + $('irounds').value + ' round(s)? Each round builds 24 small projects (48 for the first, which also measures the current version) and uses your plan for several hours.')) return;
+  try { await api('/api/improve', { rounds: $('irounds').value, budget: $('ibudget').value }); } catch (e) { alert(e.message); } benchRefresh(); };
+benchRefresh(); setInterval(benchRefresh, 30000);
 refresh(); setInterval(refresh, 10000);
 </script></body></html>
