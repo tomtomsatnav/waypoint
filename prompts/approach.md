@@ -14,7 +14,15 @@ current versions and licences, and open-source projects that solve the same prob
 - Reference projects: two to six open-source repositories worth studying for how they solve these problems, with a link,
   their licence, and what exactly to look at. They are for learning how something is done; code may only be copied where the
   licence allows it, with attribution.
+- Making the content: whatever the product is made of besides code (for a game: characters, creatures, buildings,
+  animation, sound and music; for a site or app: illustration, icons, type, photography, copy), the tools and pipelines
+  that could produce it to the standard of the brief and its reference images. Only tools that run from the command line
+  and install without a person (for example a 3D package run headless and rendered down to sprites, sprite and tileset
+  libraries, palette and dithering tools, audio synthesis), free, with licences that allow commercial use, and nothing
+  the brief rules out. Name two candidate pipelines for the most visible kind of content, with what each costs and how
+  it would look, and recommend one. Where the look matters, say that the plan's first milestone should make one small
+  sample each way (as images in owner/approach/ for the owner to see) before the rest is built on either.
 - Practices: architecture (game loop, state, entity or scene structure, data-driven content), performance budgets and how to
   measure them, and how to test this kind of product automatically.
 This is advice for the planner, not requirements: never contradict the brief, and prefer boring, well-maintained choices. At
-most 120 lines. Do not write code. Reply with one line: the hard problems you found.
+most 150 lines. Do not write code. Reply with one line: the hard problems you found.

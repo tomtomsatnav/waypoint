@@ -5,7 +5,8 @@ THE BRIEF (from the owner):
 </brief>
 {{#references}}Reference images (read them with the Read tool): {{references}}
 {{/references}}{{#approach}}A technical researcher wrote APPROACH.md (read it): the hardest technical problems, recommended libraries and
-techniques, reference projects and practices. It is advice, not requirements: use it to choose the tech in SPEC.md and to
+techniques, the tools for making the content (art, sound), reference projects and practices. Where it asks for samples
+made more than one way before choosing, put that task in the first milestone. It is advice, not requirements: use it to choose the tech in SPEC.md and to
 shape tasks, and record in SPEC.md where you depart from it and why.
 {{/approach}}{{#expectations}}A researcher wrote EXPECTATIONS.md (read it): what users of this kind of product take for granted that the brief does not
 say, each with a check. Treat every item as part of the brief unless it contradicts the brief: each becomes a feature in

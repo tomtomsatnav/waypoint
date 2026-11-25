@@ -138,6 +138,8 @@ function snapshot() {
     brief: PROJ ? (stNow?.brief || null) : arms.length ? read(join(WORK, arms[0], 'BRIEF.md')) : null,
     supervise: tail(PROJ ? join(APDIR, 'supervise.log') : join(WORK, 'supervise.log'), 6),
     notes: existsSync(join(AP, '.git')) ? readNotes(AP).slice(-8).reverse().map((n) => ({ ...n, ...ownerFiles(n.id) })) : [],
+    // samples the autopilot made for the owner unasked (owner/approach/ and the like), newest folders first
+    made: (() => { try { const ids = new Set(readNotes(AP).map((n) => n.id)); return readdirSync(join(AP, 'owner')).filter((d) => !ids.has(d) && statSync(join(AP, 'owner', d)).isDirectory()).map((d) => ({ id: d, ...ownerFiles(d) })).filter((x) => x.images.length); } catch { return []; } })(),
     shots: latestShots(),
     discord: (() => { try { const u = webhookUrl(apDir(AP)); return u ? { on: true, hint: `…${u.slice(-6)}` } : { on: false }; } catch { return { on: false }; } })(),
   };
@@ -256,7 +258,8 @@ async function tick(){try{const s=await (await fetch('/api')).json();
  document.getElementById('dstatus').innerHTML=s.discord&&s.discord.on?'<span class="pill s-running">connected</span> <span class="dim">webhook '+esc(s.discord.hint)+'</span>':'<span class="pill s-other">off</span>';
  const gal=(imgs,id)=>car(id,imgs);
  const nh=(s.notes||[]).map(n=>'<div style="margin-bottom:10px"><div class="task"><span class="'+(n.reviewed?'t-done':n.urgent?'t-retry':'t-pending')+'">●</span><span>'+esc(n.text)+' <span class="dim">'+esc(n.at.slice(11,16))+' · '+(n.reviewed?'folded into the plan (milestone '+n.reviewed.milestone+' review)':n.urgent?'urgent, waiting for the review':'waiting for the next review')+'</span></span></div>'+(n.reply?'<div class="reply">↳ '+esc(n.reply)+'</div>':'')+(n.images&&n.images.length?gal(n.images,n.id):'')+'</div>').join('');
- const ne=document.getElementById('notes');if(ne.dataset.h!==nh){ne.innerHTML=nh;ne.dataset.h=nh;}
+ const mh=(s.made||[]).map(m=>'<div style="margin-bottom:10px"><div class="dim">Made for you to look at: owner/'+esc(m.id)+' (answer with a note)</div>'+gal(m.images,'made-'+m.id)+'</div>').join('');
+ const ne=document.getElementById('notes');if(ne.dataset.h!==mh+nh){ne.innerHTML=mh+nh;ne.dataset.h=mh+nh;}
  if(s.shots&&s.shots.images.length){document.getElementById('shotsbox').style.display='';document.getElementById('shotstitle').textContent='Latest screenshots ('+s.shots.milestone.replace('-tester','').replace('m','milestone ')+', taken by the tester)';const h=gal(s.shots.images,'shots');if(document.getElementById('shots').dataset.h!==h){document.getElementById('shots').innerHTML=h;document.getElementById('shots').dataset.h=h;}}
  if(s.brief&&s.brief!==briefShown){briefShown=s.brief;const t=(s.brief.match(/^#\\s*(.+)$/m)||[])[1]||'Brief';const lead=(s.brief.split('\\n').find(l=>l.trim()&&!l.startsWith('#'))||'');
   document.getElementById('brief').innerHTML='<h2>'+esc(t)+'</h2><div>'+esc(lead.split('**').join(''))+'</div><details><summary>The full brief (BRIEF.md, as every arm received it)</summary><div class="brief mono">'+esc(s.brief)+'</div></details>';}
