@@ -1,32 +1,71 @@
 # The Vesper Road
 
-A story-driven isometric RPG of folk myth and low fantasy, in hand-placed pixel art, for Steam (Windows, macOS, Linux, Steam Deck), about $15. You
-play one person through one year: Tobin Holt, a ferryman's son in the county of Harrowmere, who is handed a sealed
-writ the night the old lord dies and must carry it the length of the county to the abbey at Vesper before the first
-snow closes the road. The writ names the heir. Three people want to be named, and each of them will be kind to him
-first. It is a game about what a decent person does when everyone with power asks for one small wrong thing.
+A story-driven RPG of folk myth and low fantasy, in pixel art, for Steam (Windows, macOS, Linux, Steam Deck), about
+$20. It is a coming-of-age epic: the whole life, so far, of one man. You play Tobin Holt from a ferryman's boy of
+eleven to the man the county of Harrowmere tells stories about, and you find out how much of the stories is true.
 
-And the county is older than its lords. The things in its stories are real, and the writ is sealed with more than
-wax: as the year turns and the seal weakens, they come out to see who carries it.
+**The frame.** An older Tobin, scarred and hunted, sits by a fire through one winter night and tells a stranger who
+has come a long way to hear it what really happened. Everyone knows the tales: Tobin Wolfsbane, the Ferryman's Son,
+the boy who sold the river, the man who made a king. He tells it straight, and the game is what he tells. The
+stranger interrupts, doubts and quotes the popular version; Tobin corrects it, or sometimes, tellingly, does not.
+When the player dies, the older Tobin says "No. That is not how it went," and the tale goes back a step.
+
+**The life, in four ages** (each a season, a region and a few years):
+1. **Spring, the boy (11).** The ferry at Orrel Landing, a father, a river he can read. He was born between banks and
+   sees what others cannot. In one night he loses his home and his family to men serving one of the great houses,
+   for reasons he will not understand for years.
+2. **Summer, the apprentice (14 to 16).** Taken in by Hesper Vane, the last of the Reeves of the Hedge, who keep the
+   old bargains between the county and the things in its stories. Hard, strange schooling in the wheat country:
+   staff and knife, letters, law, charms, and how to lie to something that cannot be lied to. Friends, a first love,
+   a rival, and the first thing he does that people sing about (and get wrong).
+3. **Autumn, the name (18 to 20).** On his own in the forest and the hill towns, doing the Reeve's work badly and
+   then well. His name grows faster than he does; people he has never met fear him or want to use him. A betrayal,
+   a mistake that costs someone else dearly, and the truth about the night at the ferry.
+4. **Winter, the reckoning (24).** The old lord dies; a sealed writ names the heir; three claimants each want the
+   famous Tobin Holt to carry it to the abbey at Vesper for them, and each is kind to him first. The road closes with
+   the first snow. What he does here is why he is hunted when the frame begins, and the last scene returns to the
+   fire, where the stranger turns out to have a reason of their own for asking.
+
+It should feel the way the great coming-of-age fantasies do: a clever, wounded, likeable boy; a hard teacher who is
+right about most things; the pleasure of getting good at something difficult; friendship that is tested; a love that
+is not simple; the slow growth of a reputation he half earns and half suffers; a world with deep, half-explained
+history; and a narrator who knows how it ends and is honest about his own faults. Take the shape and the feeling of
+that tradition only: every character, place, event, name and line is this game's own, and nothing follows the plot of
+any existing book.
+
+The county is older than its lords. The things in its stories are real, and as Tobin grows they take more and more
+notice of him.
 
 It is an original game: its own county, people, names, story and art. Nothing is copied from another game.
 
 ## The player's experience
 
 - **One hero, always.** The player controls Tobin and only Tobin, on foot, from the first minute to the last. No army,
-  no settlement to manage, no party to command. People may walk with him for a chapter (a mule-driver, a deserter, a
-  novice), and they talk, help in a fight on their own and can be lost, but they are never controlled.
-- **A journey in four chapters, one per season**, each a region with a town or village at its heart and wild country
-  around it: the river and the ferry in late summer, the wheat country at harvest, the forest and the hill towns in
-  autumn, the high road and the abbey in early winter. The same places are never revisited in a different season; the
-  road only goes on. About 8 to 10 hours for the story, with side stories that make it 14.
+  no settlement to manage, no party to command. People may walk with him for a while (a mule-driver, a deserter, a
+  fellow apprentice), and they talk, help in a fight on their own and can be lost, but they are never controlled.
+- **A life in four ages, one per season**, each a region with a town or village at its heart and wild country around
+  it: the river and the ferry in spring, the wheat country in summer, the forest and the hill towns in autumn, the high
+  road and the abbey in winter. Years pass between the ages, shown in a few lines by the fire. About 14 to 18 hours
+  for the story, with side stories that make it 25.
+- **He grows up on screen.** Tobin's body, voice, clothes, reach and animations change with each age: a small quick
+  boy with a sling, a lanky apprentice with a staff, a broad young man, a marked and weathered one. The world treats
+  him differently at each age: a child is overlooked and can go where men cannot; a famous man cannot go anywhere
+  quietly.
+- **The legend is a system.** What Tobin does is retold. After notable deeds the county's version appears (a verse, a
+  rumour, a name: Wolfsbane, Oathbreaker, the Quiet Reeve), and it is rarely accurate. Names open doors and close
+  them: people fear, flatter, test or hunt him by what they have heard. The player can feed a legend, correct it, or
+  let a useful lie stand, and the older Tobin comments on the choice. The ending depends on the man and on the legend.
+- **Teachers, friends and rivals who last.** A handful of people recur through all four ages and age with him: the
+  teacher, two friends from the apprentice years, the rival, the one he loves, the one he wronged. Their lives go on
+  whether he helps or not.
 - **Talk first.** Most problems, with people and with the old things alike, can be talked, traded, sneaked or walked around; some can only be fought. Dialogue is
   short, plain and specific, with choices that are remembered: who he helped, lied to, robbed or spared comes back in
-  later chapters and decides which of several endings he earns. No morality meter is ever shown; the world answers.
-- **Fights are few, close and dangerous.** Real-time, isometric, one against one to four: a quarterstaff, a knife, a
-  sling, later a borrowed sword he is not good with. Stamina, timing, footwork and the ground matter (wheat hides,
+  later ages and decides which of several endings he earns. No morality meter is ever shown; the world answers.
+- **Fights are few, close and dangerous.** Real-time, isometric, one against one to four: a sling as a boy, a quarterstaff and
+  knife as an apprentice, a sword he has to earn as a man. Stamina, timing, footwork and the ground matter (wheat hides,
   mud slows, a stream can be crossed where it is shallow). Wounds last until treated. He can always try to run.
-- **He grows by doing.** No classes. A handful of skills (Staff, Knife, Sling, Speech, Lore (the county's stories, charms and bargains), Woodcraft, Mending) rise
+- **He grows by doing, and by being taught.** No classes. Training with his teacher is played, not watched: drills,
+  tests and failures that unlock abilities, and some of the best scenes in the game. A handful of skills (Staff, Knife, Sling, Speech, Lore (the county's stories, charms and bargains), Woodcraft, Mending) rise
   with use and unlock a few clear abilities each. Equipment is ordinary and matters: boots, a cloak for the cold, a
   lantern, bandages, bread.
 - **The road has needs.** Food, warmth and rest are simple and never fiddly: eat once a day, sleep somewhere, keep dry
@@ -41,9 +80,9 @@ strange, local, half-seen, and bound by rules a clever person can learn. No elve
 
 - **Tobin can see them.** He was born on the ferry, mid-river, on neither bank, and people born between can see what
   walks between. Most folk cannot, so he is often the only one in a room who knows what is really sitting by the fire.
-- **Each season has its power**, one great figure of the county's stories who rules that chapter's country and wants
-  something from the writ's bearer: the **Drowned Bellringer** under the river in summer; the **Wheat Mother**, who
-  walks the fields at harvest and is owed a share; the **Hollow King** and his hunt in the autumn forest; and
+- **Each age has its power**, one great figure of the county's stories who rules that season's country and takes an
+  interest in the boy who can see it: the **Drowned Bellringer** under the river in spring, who was there the night he
+  lost everything; the **Wheat Mother**, who walks the summer fields and is owed a share; the **Hollow King** and his hunt in the autumn forest; and
   **Old Candlemas**, the white thing that closes the road in winter. Each is a set-piece meeting that can be bargained
   with, tricked, served, or fought (the hardest way, and it costs), and what he does with each one changes the ending.
 - **Lesser folk of the stories** live at the edges and make the side stories: wisps over the marsh that lead astray or
@@ -69,14 +108,16 @@ too. They must look like they belong to this county and no other.
 The reference images are stills from another creator's work, used with their permission **for the art style only**.
 That work is a strategy game about armies and villages; this is not. Take from them the look, not the game:
 
-- **Isometric pixel art** with small, upright, readable figures (about 24 to 32 pixels tall), earthy and slightly
-  muted colour, soft dithering, dark outlines only where they help. `sprites-figures-closeup.jpg` shows the scale and
+- **Pixel art in a close three-quarter view** (the fronts of buildings and people visible, as in the references, not a
+  far-out diamond grid) with detailed, readable figures about 56 to 72 pixels tall: faces, hair, cloth folds, held
+  items. A person is about a twelfth of the screen height. Earthy colour with real contrast, soft dithering, shading
+  on every surface, cast shadows. `sprites-figures-closeup.jpg` shows the scale and
   finish of people; `crowd-sprites-in-wheat.jpg` how figures sit in tall crops.
 - **A countryside that feels worked and lived in**: wheat that moves and tramples, hedges, mud tracks, a stream,
   timber-and-thatch houses with warm windows, a stone market cross, a smithy glowing at dusk
   (`village-*.jpg`, `fields-*.jpg`, `country-*.jpg`).
 - **Seasons change everything**: gold and green in summer, brown and rust in autumn, grey-white under snow
-  (`village-autumn-house.jpg`, `country-winter-snow.jpg`). Each chapter has its own palette, light and weather.
+  (`village-autumn-house.jpg`, `country-winter-snow.jpg`). Each age has its own palette, light and weather.
 - **Story moments in close-up**: for the heaviest lines the view cuts to a large, dark, painterly pixel portrait lit
   from one side on black (`portrait-helm-*.jpg` show the technique: big pixels, a narrow warm palette, deep shadow).
   Use this for faces and hands and objects of this story, not for helmets.
@@ -86,8 +127,11 @@ That work is a strategy game about armies and villages; this is not. Take from t
 - Do not use the reference's emblems, heraldry, uniforms, characters, buildings as drawn, interface layout or any of its
   words. Ignore the small watermark in the images.
 
-All art is made for this game: pixel art drawn or generated by code to one style guide (palette per season, light
-direction, figure proportions, outline rules), never images from an image generator.
+All art is made for this game, never by an image generator. Characters, creatures, buildings, trees and props are
+built as 3D models in Blender, driven from the command line by scripts kept in the repo, and rendered down to pixel
+sprites: one camera angle, one light setup, low native resolution without anti-aliasing, quantised to one fixed palette
+per season, 8 directions with walk, idle, talk and attack animations. Ground is painted with many tones and no visible
+repetition; at least six variants of each tree and hedge, placed irregularly.
 
 ## Sound
 
@@ -116,15 +160,17 @@ judges it against the references and the checklist; anything generic is redone.
   refused) and cloud saves that are skipped safely when Steam is not running. The owner does the Steamworks account
   and uploads.
 - Steady 60 fps on Steam Deck-class hardware.
-- A demo build: the first chapter up to leaving the ferry, ending on a wishlist screen.
+- A demo build: the boy's spring at the ferry up to the night he loses it, ending on a wishlist screen.
 - A plain-language note for the owner on what Steam's AI-content disclosure should say about how the art, text and
   music were made.
 
 ## Done means
 
-A player installs it, starts with one click, and plays Tobin from the ferry to the abbey over four seasons in eight to
-ten hours without ever controlling anyone else; talks, sneaks or fights through each chapter in more than one way;
-meets the four powers of the seasons and deals with each in a way of their own choosing; sees choices from the first
-chapter change the last; reaches one of at least four endings that feel earned; can do all
+A player installs it, starts with one click, and plays Tobin from a boy of eleven at the ferry to the man at the abbey
+gate, across four ages, in fourteen to eighteen hours without ever controlling anyone else; watches him grow up on
+screen and his legend grow beside him, right and wrong; is taught, and feels himself get good; talks, sneaks or fights
+through each age in more than one way; meets the four powers of the seasons and deals with each in a way of their own
+choosing; sees choices from his boyhood change the last age; hears the older Tobin tell it and learns at the end who
+he was telling it to; reaches one of at least four endings that feel earned; can do all
 of it with a controller on a Steam Deck; and at no point sees a placeholder, a borrowed name or anything that looks
 generic beside the reference images. The demo build and ten clean screenshots for the store are ready.
