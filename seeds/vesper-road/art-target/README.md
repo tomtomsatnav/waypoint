@@ -18,8 +18,11 @@ noisy.
 `tobin-ages-6x.png` is the row that matters most to the story: Bram, then Tobin at 11, 15, 19 and 24 on one ground
 line (`tobin-11.png` to `tobin-24.png` are the sprites). At 11 he reaches his father's chest, slight, bare-legged, a
 sling in his hand. At 15 he is all length: a staff taller than he is, an apprentice's cape, a satchel. At 19 he has his
-father's frame but not yet his width or his wear. At 24 he is built like Bram and a little taller, in a blue cloak,
-wearing Bram's pauldron and strap, with Bram's sword point-down under his hand. The 19 and 24 figures were made from
+father's frame but not yet his width or his wear. At 24 he is a knight, built like Bram and a little taller: full plate (layered
+pauldrons, gorget, vambraces and gauntlets, greaves and sabatons, mail at the thigh), a blue surcoat with his own
+device, a white river, a heavy cream cloak edged in blue and gilt, and Bram's sword point-down under his gauntlet.
+The plate is dented and rusting at the edges and the cloak is muddy and cut: a knight who has been on the road, not on
+parade (`tobin-24-beside-reference.png`). The device is this game's own; do not use the reference's cross. The 19 and 24 figures were made from
 Bram's own drawing, which is why the likeness holds; the 11 and 15 figures are simpler drafts and should be redrawn to
 Bram's level of finish.
 
