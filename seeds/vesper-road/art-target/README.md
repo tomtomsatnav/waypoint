@@ -14,3 +14,12 @@ unkempt beard, patched and torn cloth, mud up from the hem and on the boots, scu
 and one or two things that tell his past (a battered pauldron, an old sword-belt strap). Nobody looks freshly
 laundered. Wear is drawn on after the clean figure, as the last section of the script shows; keep it readable, not
 noisy.
+
+`tobin-ages-6x.png` is the row that matters most to the story: Bram, then Tobin at 11, 15, 19 and 24 on one ground
+line (`tobin-11.png` to `tobin-24.png` are the sprites). At 11 he reaches his father's chest, slight, bare-legged, a
+sling in his hand. At 15 he is all length: a staff taller than he is, an apprentice's cape, a satchel. At 19 he has his
+father's frame but not yet his width or his wear. At 24 he is built like Bram and a little taller, in a blue cloak,
+wearing Bram's pauldron and strap, with Bram's sword point-down under his hand. The 19 and 24 figures were made from
+Bram's own drawing, which is why the likeness holds; the 11 and 15 figures are simpler drafts and should be redrawn to
+Bram's level of finish.
+
