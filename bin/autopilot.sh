@@ -43,7 +43,7 @@ check() {
 launch() { # start or resume the autopilot in the background, once
   running && return 0
   local args=("$@")
-  if [ -f "$AP/state.json" ]; then sub=(resume "${args[@]}"); else sub=(start "${args[@]}"); fi
+  if [ -f "$AP/state.json" ]; then sub=(resume ${args[@]+"${args[@]}"}); else sub=(start ${args[@]+"${args[@]}"}); fi
   (cd "$PROJ" && nohup node "$WP/bin/waypoint.mjs" autopilot "${sub[@]}" --yes >> "$AP/autopilot.out" 2>> "$AP/autopilot.err" < /dev/null &)
   say "launched autopilot (${sub[0]})"
 }
