@@ -4,14 +4,14 @@ T=(0,0,0,0)
 img=Image.new('RGBA',(W,H),T); px=img.load()
 def c(h): return tuple(int(h[i:i+2],16) for i in (1,3,5))+(255,)
 OUT=c('#140f0d')
-SKIN=[c('#e8b58c'),c('#c4875c'),c('#8f5a3d'),c('#5e3a2a')]
+SKIN=[c('#d6a077'),c('#b0744c'),c('#7f4d37'),c('#4f3026')]
 HAIR=[c('#c9c2b4'),c('#9a6a47'),c('#6b4330'),c('#3f281e')]
-BEARD=[c('#ece8dc'),c('#bdb7a9'),c('#8a8479'),c('#5b564f')]
-LINEN=[c('#efe6cc'),c('#cbbd9a'),c('#9b8d6e'),c('#6a5e49')]
+BEARD=[c('#dcd6c6'),c('#aca596'),c('#7d776b'),c('#514c45')]
+LINEN=[c('#d6caa8'),c('#ada07c'),c('#81755a'),c('#584e3d')]
 LEATH=[c('#b47c48'),c('#8a5a33'),c('#5e3b23'),c('#3a2417')]
 WOOL=[c('#7d9463'),c('#5a7049'),c('#3d5035'),c('#283525')]
-CLOAK=[c('#86694a'),c('#614a35'),c('#423224'),c('#2a2018')]
-FUR=[c('#d6cbb0'),c('#a99c7f'),c('#7a6f59'),c('#4f4739')]
+CLOAK=[c('#7a6046'),c('#584433'),c('#3c2e23'),c('#261d17')]
+FUR=[c('#b8ab8c'),c('#8e8166'),c('#655b48'),c('#40392e')]
 HOSE=[c('#74717f'),c('#504e5e'),c('#33323f'),c('#201f29')]
 BOOT=[c('#7a5238'),c('#553625'),c('#372218'),c('#22150f')]
 IRON=[c('#dfe2e6'),c('#9ea3ab'),c('#5d626b'),c('#34373d')]
@@ -139,6 +139,93 @@ for x in range(26,32): P(x,15,BEARD[0])                                         
 for x in range(27,31): P(x,16,BEARD[3])                                                   # mouth shadow
 for (x,y) in [(25,18),(28,19),(31,18),(27,21),(30,20),(24,17)]: P(x,y,BEARD[2])
 for (x,y) in [(24,16),(25,19),(26,20)]: P(x,y,BEARD[0])
+
+
+# ---------- rugged: a hard life, drawn on
+import random; random.seed(11)
+MUD=[c('#6a5a40'),c('#4d4130'),c('#352c21')]
+RUST=[c('#9a5a34'),c('#6e3d25')]
+SCAR=c('#e3b9a3')
+def opaque(x,y): return 0<=x<W and 0<=y<H and px[x,y][3]!=0
+# cloak: two stitched patches, stains, a long rip, mud up from the hem
+for (x0,y0,x1,y1,pal) in [(12,48,16,54,[c('#6c6a4a'),c('#4e4d36')]),(42,38,46,43,[c('#7d5a48'),c('#5a4034')])]:
+    for y in range(y0,y1+1):
+        for x in range(x0,x1+1): P(x,y,pal[0] if (x+y)%3 else pal[1])
+    for x in range(x0,x1+1,2): P(x,y0-1,CLOAK[3]); P(x,y1+1,CLOAK[3])
+    for y in range(y0,y1+1,2): P(x0-1,y,CLOAK[3]); P(x1+1,y,CLOAK[3])
+for y in range(58,71): P(45+(1 if y%5<2 else 0),y,OUT if y%4 else CLOAK[3])          # a rip, lit along one edge
+for y in range(59,70,3): P(47,y,CLOAK[0])
+for _ in range(70):
+    x=random.randrange(7,51); y=random.randrange(60,75)
+    if opaque(x,y) and px[x,y] in CLOAK: P(x,y,random.choice(MUD))
+for _ in range(26):
+    x=random.randrange(9,49); y=random.randrange(28,60)
+    if opaque(x,y) and px[x,y] in CLOAK: P(x,y,CLOAK[3] if random.random()<.6 else CLOAK[0])
+for x in (9,13,14,22,23,41,47,48): P(x,74,T); P(x,73,T) if x%2 else None              # torn hem
+for x in (10,24,43): P(x,76,CLOAK[2]); P(x,77,CLOAK[3])                                # hanging threads
+# mantle: matted fur, a bald worn patch
+for _ in range(40):
+    x=random.randrange(10,48); y=random.randrange(18,26)
+    if opaque(x,y) and px[x,y] in FUR: P(x,y,random.choice([FUR[2],FUR[3],FUR[1]]))
+for (x,y) in [(15,22),(16,22),(16,23),(17,23)]: P(x,y,CLOAK[1])
+# an old fighter's leftovers: a battered iron pauldron on one shoulder, a sword-belt strap across the chest
+for y,a,b in [(18,39,44),(19,38,46),(20,38,47),(21,38,47),(22,39,47),(23,39,47),(24,40,46)]: span(y,a,b,IRON[1:]+[IRON[3]],2,3,1)
+for (x,y) in [(41,20),(42,21)]: P(x,y,IRON[3])                                          # dent
+for (x,y) in [(44,19),(45,22),(40,23),(43,24)]: P(x,y,RUST[0])
+for (x,y) in [(46,21),(41,24)]: P(x,y,RUST[1])
+for x in range(38,48): P(x,25,OUT) if x%2 else P(x,25,IRON[3])
+P(40,19,IRON[0])
+for i in range(0,20):                                                                   # strap, shoulder to hip
+    x=20+i; y=24+i
+    if y<44: P(x,y,BOOT[3]); P(x,y+1,BOOT[1]); P(x+1,y,BOOT[2])
+P(30,34,IRON[1]); P(31,35,IRON[2])
+# jerkin: scuffs, a mended tear, sweat-dark under the arm
+for _ in range(34):
+    x=random.randrange(19,39); y=random.randrange(25,44)
+    if opaque(x,y) and px[x,y] in LEATH: P(x,y,random.choice([LEATH[0],LEATH[2],LEATH[2],LEATH[3]]))
+for i in range(5): P(23+i,40-i,LEATH[3]); P(23+i,39-i,LINEN[1]) if i%2==0 else None
+# shirt: stains and a frayed, uneven cuff
+for _ in range(16):
+    x=random.randrange(10,48); y=random.randrange(26,37)
+    if opaque(x,y) and px[x,y] in LINEN: P(x,y,random.choice([LINEN[2],LINEN[3],MUD[0]]))
+# forearms: a studded leather bracer on one, a dirty bandage on the other, old scars
+for y,a,b in [(38,13,21),(39,14,22),(40,15,23)]: span(y,a,b,LEATH,2,2,1)
+for (x,y) in [(15,38),(18,39),(21,40)]: P(x,y,IRON[1])
+for y,a,b in [(36,41,48),(37,42,49)]: span(y,a,b,LINEN,1,2,1)
+P(44,36,MUD[0]); P(46,37,RUST[1]); P(49,38,LINEN[1])
+P(17,42,SCAR); P(18,43,SCAR); P(45,39,SCAR)
+# hands: scabbed knuckles
+for (x,y) in [(21,44),(23,44),(25,44)]: P(x,y,RUST[1])
+# face: a sword scar through the brow to the cheek, a broken nose, hollowed cheek, crow's feet
+for (x,y) in [(25,9),(25,10),(25,11),(24,13)]: P(x,y,SCAR)
+P(25,12,SKIN[3]); P(24,14,SKIN[2])
+P(28,13,SKIN[1]); P(29,12,SKIN[0]); P(29,14,SKIN[3])                                    # nose knocked sideways
+P(32,13,SKIN[3]); P(33,12,SKIN[3]); P(33,13,SKIN[3]); P(24,11,SKIN[3])
+# hair and beard: unkempt, uneven
+for (x,y) in [(24,4),(33,4),(22,6),(36,8),(21,9),(35,6)]: P(x,y,HAIR[2])
+for (x,y) in [(23,5),(34,5)]: P(x,y,HAIR[1])
+for (x,y,t) in [(21,17,1),(36,16,2),(22,20,2),(34,21,2),(24,22,1),(33,22,3),(25,23,2),(31,24,2),(28,24,1),(29,25,2),(27,24,2)]: P(x,y,BEARD[t])
+for (x,y) in [(26,18),(30,19),(28,21),(32,17),(24,19),(29,22)]: P(x,y,BEARD[3])
+for (x,y) in [(25,20),(31,21)]: P(x,y,HAIR[1])                                           # red still in the grey
+# skirt: a patch and a ragged hem; hose patched at one knee
+for y in range(50,54):
+    for x in range(30,34): P(x,y,c('#6f6a4c') if (x+y)%2 else c('#55523a'))
+for x in (18,21,26,31,37,40): P(x,57,T)
+for (x,y) in [(21,60),(22,60),(23,60),(21,61),(22,61),(23,61),(22,62)]: P(x,y,c('#5e5a48'))
+P(20,60,OUT); P(24,61,OUT)
+# boots: caked mud, a split toe, a rope tie
+for _ in range(46):
+    x=random.randrange(16,42); y=random.randrange(74,84)
+    if opaque(x,y) and px[x,y] in BOOT: P(x,y,random.choice(MUD))
+for x in range(20,28): P(x,72,c('#a8946a') if x%2 else c('#7a6a4a'))
+for x in range(30,38): P(x,71,c('#a8946a') if x%2 else c('#7a6a4a'))
+P(17,81,OUT); P(18,81,SKIN[2])
+# pitchfork: rust, one bent tine, a bound split in the shaft
+for (x,y) in [(46,3),(49,6),(53,2),(50,8),(47,9)]: P(x,y,RUST[0])
+for y in range(0,3): P(53,y,T)
+P(54,2,IRON[2]); P(54,1,IRON[1]); P(55,0,IRON[1])
+for y in (52,53,54): P(49,y,c('#a8946a')); P(50,y,c('#7a6a4a'))
+P(51,53,c('#a8946a'))
 
 # ---------- outline: one dark pixel all round, and inside where parts overlap
 src=img.copy(); s=src.load()

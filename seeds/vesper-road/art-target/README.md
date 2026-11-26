@@ -8,3 +8,9 @@ folds, a one-pixel dark outline, inner outlines where parts overlap. It is an ex
 What makes him work, and what every figure needs: about 80 native pixels tall; a small head on a broad body; a wide
 A-shaped silhouette from a heavy cloak; a readable face (brow shadow, single-pixel eyes, nose, beard); flat tones with
 hard-edged shadow shapes, no gradients; a planted stance with the hands doing something.
+
+He is also deliberately **rugged**, and so is everyone in this county who works or fights: weathered skin, a scar, an
+unkempt beard, patched and torn cloth, mud up from the hem and on the boots, scuffed leather, mismatched mended gear,
+and one or two things that tell his past (a battered pauldron, an old sword-belt strap). Nobody looks freshly
+laundered. Wear is drawn on after the clean figure, as the last section of the script shows; keep it readable, not
+noisy.
