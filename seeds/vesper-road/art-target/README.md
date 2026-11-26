@@ -26,3 +26,17 @@ parade (`tobin-24-beside-reference.png`). The device is this game's own; do not 
 Bram's own drawing, which is why the likeness holds; the 11 and 15 figures are simpler drafts and should be redrawn to
 Bram's level of finish.
 
+
+## What makes a figure read as a grown man (measured from the reference)
+
+`draw-knight.py` drew Tobin at 24 from measurements of the reference figures, after an earlier knight looked childish.
+The differences that mattered, for every adult:
+- A **narrow, long head**: about 11 px wide and 17 tall with the beard, never a wide round one.
+- **Eyes in shadow**: a dark brow band and sockets with a single dark pixel each. Never pale eye dots on a flat face.
+- **Face planes**: lit forehead and cheek on one side, shadowed on the other, a nose with a shadow beside it.
+- A **thick neck** (mail coif, collar, beard) so the head sits in the shoulders.
+- **Shoulders about 2.6 head-widths**, no wider: huge pauldrons look like a toy.
+- A **long garment** (surcoat or tunic to below the knee) so the legs are short and only boots or greaves show.
+- **Long arms**, hands at mid-thigh, doing something (a hand on the hilt).
+- **Dark, muted colour**: gunmetal plate with few highlights, not bright silver; dull cloth.
+- A cloak falling in an **A to the ankle**.
