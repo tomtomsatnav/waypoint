@@ -114,7 +114,7 @@ The reference images are stills from another creator's work, used with their per
 That work is a strategy game about armies and villages; this is not. Take from them the look, not the game:
 
 - **Pixel art in a close three-quarter view** (the fronts of buildings and people visible, as in the references, not a
-  far-out diamond grid) with detailed, readable figures about 56 to 72 pixels tall: faces, hair, cloth folds, held
+  far-out diamond grid) with detailed, readable figures about 80 pixels tall: faces, hair, cloth folds, held
   items. A person is about a twelfth of the screen height. Earthy colour with real contrast, soft dithering, shading
   on every surface, cast shadows. `sprites-figures-closeup.jpg` shows the scale and
   finish of people; `crowd-sprites-in-wheat.jpg` how figures sit in tall crops.
@@ -132,11 +132,13 @@ That work is a strategy game about armies and villages; this is not. Take from t
 - Do not use the reference's emblems, heraldry, uniforms, characters, buildings as drawn, interface layout or any of its
   words. Ignore the small watermark in the images.
 
-All art is made for this game, never by an image generator. Characters, creatures, buildings, trees and props are
-built as 3D models in Blender, driven from the command line by scripts kept in the repo, and rendered down to pixel
-sprites: one camera angle, one light setup, low native resolution without anti-aliasing, quantised to one fixed palette
-per season, 8 directions with walk, idle, talk and attack animations. Ground is painted with many tones and no visible
-repetition; at least six variants of each tree and hedge, placed irregularly.
+All art is made for this game. **Key characters** (about a dozen: Tobin at each age, Bram, Hesper Vane, the three
+claimants, the four powers) are generated with PixelLab from text descriptions and finished by hand, following
+`art-target/README.md` exactly; its figures are the standard. **Everyone else** is drawn pixel by pixel in code or
+re-dressed from those figures, to the same size, palette and outline. **Buildings, trees, props and ground** are 3D
+models in Blender, driven by scripts in the repo and rendered to pixel sprites with a fixed palette per season. The
+reference images are never uploaded to any generator. Keep a list of everything PixelLab generated, for the Steam
+AI-content disclosure.
 
 ## Sound
 
