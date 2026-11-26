@@ -1,26 +1,29 @@
 # The Vesper Road
 
 A story-driven RPG of folk myth and low fantasy, in pixel art, for Steam (Windows, macOS, Linux, Steam Deck), about
-$20. It is a coming-of-age epic: the whole life, so far, of one man. You play Tobin Holt from a ferryman's boy of
+$20. It is a coming-of-age epic: the whole life, so far, of one man. You play Tobin Holt from a farmhand's boy of
 eleven to the man the county of Harrowmere tells stories about, and you find out how much of the stories is true.
 
 **The frame.** An older Tobin, scarred and hunted, sits by a fire through one winter night and tells a stranger who
-has come a long way to hear it what really happened. Everyone knows the tales: Tobin Wolfsbane, the Ferryman's Son,
+has come a long way to hear it what really happened. Everyone knows the tales: Tobin Wolfsbane, the Old Soldier's Son,
 the boy who sold the river, the man who made a king. He tells it straight, and the game is what he tells. The
 stranger interrupts, doubts and quotes the popular version; Tobin corrects it, or sometimes, tellingly, does not.
 When the player dies, the older Tobin says "No. That is not how it went," and the tale goes back a step.
 
 **The life, in four ages** (each a season, a region and a few years):
-1. **Spring, the boy (11).** The ferry at Orrel Landing, a father, a river he can read. He was born between banks and
-   sees what others cannot. In one night he loses his home and his family to men serving one of the great houses,
-   for reasons he will not understand for years.
+1. **Spring, the boy (11).** The farm by the ferry at Orrel Landing, and his father, Bram Holt: an old warrior who put
+   his sword in the thatch years ago and hires out as a farmhand. Bram is still built like what he was, a big, strong,
+   ageing fighting man with farm strength on top, grey in the beard, slow to speak, and he will not talk about before.
+   Tobin was born on the ferry, between banks, and sees what others cannot. In one night men serving one of the great
+   houses come for Bram because of who he used to be, and Tobin loses his home and his father, for reasons he will not
+   understand for years. He keeps the sword. He cannot lift it properly until the third age.
 2. **Summer, the apprentice (14 to 16).** Taken in by Hesper Vane, the last of the Reeves of the Hedge, who keep the
    old bargains between the county and the things in its stories. Hard, strange schooling in the wheat country:
    staff and knife, letters, law, charms, and how to lie to something that cannot be lied to. Friends, a first love,
    a rival, and the first thing he does that people sing about (and get wrong).
 3. **Autumn, the name (18 to 20).** On his own in the forest and the hill towns, doing the Reeve's work badly and
    then well. His name grows faster than he does; people he has never met fear him or want to use him. A betrayal,
-   a mistake that costs someone else dearly, and the truth about the night at the ferry.
+   a mistake that costs someone else dearly, and the truth about his father and the night at the ferry.
 4. **Winter, the reckoning (24).** The old lord dies; a sealed writ names the heir; three claimants each want the
    famous Tobin Holt to carry it to the abbey at Vesper for them, and each is kind to him first. The road closes with
    the first snow. What he does here is why he is hunted when the frame begins, and the last scene returns to the
@@ -47,8 +50,10 @@ It is an original game: its own county, people, names, story and art. Nothing is
   it: the river and the ferry in spring, the wheat country in summer, the forest and the hill towns in autumn, the high
   road and the abbey in winter. Years pass between the ages, shown in a few lines by the fire. About 14 to 18 hours
   for the story, with side stories that make it 25.
-- **He grows up on screen.** Tobin's body, voice, clothes, reach and animations change with each age: a small quick
-  boy with a sling, a lanky apprentice with a staff, a broad young man, a marked and weathered one. The world treats
+- **He grows up on screen.** Tobin's body, voice, clothes, reach and animations change with each age: a small, slight
+  boy with a sling beside his huge father; a lanky apprentice with a staff, all elbows; a broad young man filling out;
+  and at twenty-four a big man, built like Bram and a little taller, carrying Bram's sword. The player should see the
+  father in him by the end, and so should the people who knew Bram. The world treats
   him differently at each age: a child is overlooked and can go where men cannot; a famous man cannot go anywhere
   quietly.
 - **The legend is a system.** What Tobin does is retold. After notable deeds the county's version appears (a verse, a
@@ -62,7 +67,7 @@ It is an original game: its own county, people, names, story and art. Nothing is
   short, plain and specific, with choices that are remembered: who he helped, lied to, robbed or spared comes back in
   later ages and decides which of several endings he earns. No morality meter is ever shown; the world answers.
 - **Fights are few, close and dangerous.** Real-time, isometric, one against one to four: a sling as a boy, a quarterstaff and
-  knife as an apprentice, a sword he has to earn as a man. Stamina, timing, footwork and the ground matter (wheat hides,
+  knife as an apprentice, his father's sword, which he has to grow into and earn, as a man. Stamina, timing, footwork and the ground matter (wheat hides,
   mud slows, a stream can be crossed where it is shallow). Wounds last until treated. He can always try to run.
 - **He grows by doing, and by being taught.** No classes. Training with his teacher is played, not watched: drills,
   tests and failures that unlock abilities, and some of the best scenes in the game. A handful of skills (Staff, Knife, Sling, Speech, Lore (the county's stories, charms and bargains), Woodcraft, Mending) rise
