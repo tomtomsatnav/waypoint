@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lantern Drop</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b1026; color: #fff; font-family: system-ui, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    canvas { display: block; max-width: 100vw; max-height: 100vh; aspect-ratio: 4 / 3; width: min(100vw, 133vh); background: #0b1026; }
+  </style>
+</head>
+<body>
+<canvas id="c" width="800" height="600" tabindex="0" aria-label="Lantern Drop game"></canvas>
+<script>
+(() => {
+  const W = 800, H = 600, GROUND = H - 40;
+  const BASKET_W = 90, BASKET_H = 22, SPEED = 520, R = 14;
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const BEST_KEY = 'lantern-drop.best';
+  let best = 0;
+  try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch {}
+
+  const keys = new Set();
+  let status = 'title', score = 0, lives = 3, playerX = W / 2;
+  let lanterns = [], autoSpawn = true, spawnTimer = 0, flashes = [];
+  const stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * GROUND, r: Math.random() * 1.5 + 0.3 }));
+
+  const fallSpeed = () => 120 + score * 8;          // lanterns come faster as the score rises
+  const spawnEvery = () => Math.max(0.45, 1.4 - score * 0.03);
+
+  function reset() { score = 0; lives = 3; playerX = W / 2; lanterns = []; spawnTimer = 0; flashes = []; }
+  function start() { reset(); status = 'playing'; }
+  function spawnLantern(x) {
+    const cx = Math.min(W - R, Math.max(R, Number(x)));
+    lanterns.push({ x: cx, y: -R, sway: Math.random() * Math.PI * 2 });
+  }
+  function gameOver() {
+    status = 'over';
+    if (score > best) { best = score; try { localStorage.setItem(BEST_KEY, String(best)); } catch {} }
+  }
+
+  addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if ([' ', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault();
+    keys.add(k);
+    if (e.repeat) return;
+    if (status === 'title' && (k === ' ' || k === 'enter')) start();
+    else if (k === 'p' && (status === 'playing' || status === 'paused')) status = status === 'playing' ? 'paused' : 'playing';
+    else if (k === 'r' && status === 'over') start();
+    else if (status === 'over' && (k === ' ' || k === 'enter')) start();
+  });
+  addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+  addEventListener('blur', () => keys.clear());
+
+  function update(dt) {
+    if (status !== 'playing') return;
+    const dir = (keys.has('arrowright') || keys.has('d') ? 1 : 0) - (keys.has('arrowleft') || keys.has('a') ? 1 : 0);
+    playerX = Math.min(W - BASKET_W / 2, Math.max(BASKET_W / 2, playerX + dir * SPEED * dt));
+    if (autoSpawn) {
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) { spawnLantern(R + Math.random() * (W - 2 * R)); spawnTimer = spawnEvery(); }
+    }
+    const v = fallSpeed();
+    for (const l of lanterns) { l.y += v * dt; l.sway += dt * 3; }
+    const top = GROUND - BASKET_H;
+    lanterns = lanterns.filter((l) => {
+      if (l.y + R >= top && l.y - R <= GROUND && Math.abs(l.x - playerX) <= BASKET_W / 2 + R * 0.6) {
+        score++; flashes.push({ x: l.x, y: top, t: 0.4 }); return false;
+      }
+      if (l.y - R > GROUND) { lives--; return false; }
+      return true;
+    });
+    flashes = flashes.filter((f) => (f.t -= dt) > 0);
+    if (lives <= 0) { lives = 0; gameOver(); }
+  }
+
+  function text(s, x, y, size, color = '#fff', align = 'center') {
+    ctx.fillStyle = color; ctx.font = `${size}px system-ui, sans-serif`; ctx.textAlign = align; ctx.fillText(s, x, y);
+  }
+  function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b1026'); g.addColorStop(1, '#2a2350');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ffffffaa'; for (const s of stars) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#16122b'; ctx.fillRect(0, GROUND, W, H - GROUND);
+    for (const l of lanterns) {
+      const x = l.x + Math.sin(l.sway) * 2;
+      ctx.shadowColor = '#ffb347'; ctx.shadowBlur = 24; ctx.fillStyle = '#ffb347';
+      ctx.beginPath(); ctx.ellipse(x, l.y, R * 0.8, R, 0, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffe9b0'; ctx.fillRect(x - 3, l.y - 4, 6, 8);
+    }
+    for (const f of flashes) { ctx.fillStyle = `rgba(255,220,140,${f.t * 2})`; ctx.beginPath(); ctx.arc(f.x, f.y, 30 * (1 - f.t), 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#c98a4b'; ctx.fillRect(playerX - BASKET_W / 2, GROUND - BASKET_H, BASKET_W, BASKET_H);
+    ctx.fillStyle = '#8a5a2b'; ctx.fillRect(playerX - BASKET_W / 2, GROUND - BASKET_H, BASKET_W, 5);
+    if (status !== 'title') {
+      text(`Score ${score}`, 20, 36, 24, '#fff', 'left');
+      text('♥'.repeat(lives) + '♡'.repeat(3 - lives), W - 20, 36, 24, '#ff7a90', 'right');
+    }
+    const veil = () => { ctx.fillStyle = 'rgba(5,8,20,0.6)'; ctx.fillRect(0, 0, W, H); };
+    if (status === 'title') {
+      veil(); text('Lantern Drop', W / 2, 220, 56, '#ffd27a');
+      text('Catch the lanterns before they reach the ground', W / 2, 270, 20);
+      text('← → or A / D to move · P to pause', W / 2, 310, 18, '#ccc');
+      text('Press Space or Enter to start', W / 2, 380, 24);
+      if (best) text(`Best: ${best}`, W / 2, 430, 18, '#ccc');
+    } else if (status === 'paused') {
+      veil(); text('Paused', W / 2, 280, 48); text('Press P to resume', W / 2, 330, 20, '#ccc');
+    } else if (status === 'over') {
+      veil(); text('Game over', W / 2, 230, 52, '#ffd27a'); text(`Score: ${score}`, W / 2, 290, 28);
+      text(`Best: ${best}`, W / 2, 330, 22, '#ccc'); text('Press R to play again', W / 2, 390, 22);
+    }
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    update(dt); draw(); requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  canvas.focus();
+
+  window.game = {
+    width: W,
+    state: () => ({ status, score, lives, best, playerX }),
+    spawnLantern,
+    setAutoSpawn: (on) => { autoSpawn = !!on; },
+  };
+})();
+</script>
+</body>
+</html>

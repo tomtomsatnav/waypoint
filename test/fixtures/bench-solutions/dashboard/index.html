@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales at a glance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>Sales at a glance</h1>
+    <label>Period
+      <select data-testid="month-filter" id="month"><option value="all">All months</option></select>
+    </label>
+  </header>
+  <section class="kpi">
+    <div class="label">Total revenue</div>
+    <div class="value" data-testid="total-revenue" id="total">…</div>
+    <div class="sub" id="sub"></div>
+  </section>
+  <div class="grid">
+    <section class="panel">
+      <h2>Revenue by region</h2>
+      <table>
+        <thead><tr><th scope="col">Region</th><th scope="col" class="num">Revenue</th><th scope="col" class="num">Share</th></tr></thead>
+        <tbody id="regions"></tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>Revenue by month</h2>
+      <svg data-testid="chart" id="chart" viewBox="0 0 600 300" role="img" aria-label="Revenue by month"></svg>
+    </section>
+  </div>
+  <p id="error" class="error" hidden></p>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

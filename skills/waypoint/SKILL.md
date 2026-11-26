@@ -20,6 +20,12 @@ own), ask the user where waypoint is cloned, or clone it for them with their per
 Check the essentials once: `node --version` (18 or newer), `git`, and `claude` logged in to the user's plan. The first
 start installs Playwright and Chromium into `~/.waypoint/tools`; tell the user it will take a minute.
 
+## If the user would rather click than type
+
+Offer the launcher: `node $WP/bin/app.mjs --open` (on a Mac, double-clicking `Waypoint.command` in `$WP` does the same).
+It opens a page where they describe the project, get a drafted brief, add images, choose a folder and start; it also lists
+their projects with dashboards, notes, stop and carry on. Projects you start below appear there too.
+
 ## Starting a run
 
 All commands run in the project's folder, which must be a git repository with at least one commit (offer to `git init`
@@ -65,6 +71,14 @@ and commit what is there if not).
   failing, look at the log, then send a note explaining what you think is wrong. Do not edit the project's code or the
   autopilot's files under `.git/autopilot` by hand while it runs.
 - **Stop**: `$WP/bin/autopilot.sh stop`. Nothing is lost; `start` carries on.
+
+## Improving waypoint itself
+
+If the user asks waypoint to get better at building (not to build something), explain the improvement loop in a few
+sentences: it tries one change to its own prompts or routing per round, measures it on a benchmark of small projects and
+opens a pull request only when it is better; the first round makes 48 builds and later ones 24, which uses their plan for
+hours. Start it only when they agree: `$WP/bin/autopilot.sh improve --rounds 1 --yes` (`improve status`, `improve log`,
+`improve stop`). Kept changes arrive as pull requests on their waypoint repository for them to review.
 
 ## Smaller jobs
 

@@ -1,0 +1,1 @@
+Your previous attempt at {{file}} was not usable: {{problem}}. Write valid JSON only (no comments, no trailing commas, no prose around it), with "verdict" and, unless the verdict is "ship", a "milestone" that has a title and at least one task.

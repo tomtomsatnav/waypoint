@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>waypoint</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--dim:#6b6b70;--line:#e3e1dc;--accent:#3a5bd9;--accent-ink:#fff;--good:#1f8a4c;--warn:#b26b00;--bad:#c0392b;--soft:#eef1fc}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1e1e22;--ink:#ececef;--dim:#9a9aa3;--line:#2e2e34;--accent:#7b93ff;--accent-ink:#0d0d10;--good:#4cc27e;--warn:#e0a040;--bad:#ef6b5b;--soft:#23263a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:28px 16px 80px}
+header{display:flex;align-items:baseline;gap:12px;margin-bottom:22px}h1{font-size:26px;margin:0;letter-spacing:-.02em}
+h2{font-size:17px;margin:0 0 12px}.dim{color:var(--dim)}.small{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+.proj{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:start}.proj .name{font-weight:600;font-size:16px}
+.proj .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:99px;border:1px solid currentColor;margin-left:8px;vertical-align:1px}
+.s-running{color:var(--good)}.s-paused,.s-starting{color:var(--warn)}.s-stopped,.s-missing{color:var(--bad)}.s-finished{color:var(--accent)}.s-not{color:var(--dim)}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer;text-decoration:none}
+button:hover{border-color:var(--dim)}button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button:disabled{opacity:.5;cursor:default}button.big{padding:11px 22px;font-size:16px}
+label{display:block;font-weight:600;margin:16px 0 6px}label .dim{font-weight:400}
+input[type=text],input[type=url],input[type=password],input[type=number],textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+textarea{min-height:110px;resize:vertical}#brief{min-height:320px;font:13px/1.5 ui-monospace,Menlo,monospace}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:200px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--dim);cursor:pointer}.drop.over{border-color:var(--accent);background:var(--soft)}
+.refs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.ref{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}.ref img{width:100%;height:100px;object-fit:cover;display:block}
+.ref input{border:0;border-top:1px solid var(--line);border-radius:0;font-size:12px;padding:6px 8px}.ref .x{float:right;border:0;background:none;padding:2px 6px;color:var(--dim)}
+.log{font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--dim);white-space:pre-wrap;margin-top:6px;max-height:110px;overflow:auto}
+.steps{display:flex;gap:8px;margin-bottom:6px}.steps span{font-size:12px;color:var(--dim)}
+.msg{margin-top:10px;font-size:14px}.err{color:var(--bad)}.ok{color:var(--good)}
+details summary{cursor:pointer;font-weight:600;margin-top:16px}
+.notebar{display:flex;gap:8px;margin-top:8px}.notebar input{flex:1}
+.hidden{display:none}.path{overflow-wrap:anywhere}
+@media (max-width:560px){.proj{grid-template-columns:minmax(0,1fr)}.proj .acts{justify-content:flex-start}.grow{min-width:0;flex-basis:100%}}
+</style></head><body><main>
+<header><h1>waypoint</h1><span class="dim">build big things with Claude Code, and steer them while they run</span></header>
+
+<div id="nokey" class="card hidden"><b>Open the launcher from the link it printed</b> (the one ending in <code>?key=…</code>), or double-click <b>Waypoint.command</b> again.</div>
+
+<div id="banner" class="msg"></div>
+<section id="list"></section>
+
+<div class="row" style="margin:6px 0 22px"><button class="primary big" id="newbtn">+ New project</button><button id="addbtn">Add a folder I already have</button></div>
+
+<div id="addcard" class="card hidden"><h2>Add a folder to this list</h2>
+<div class="dim small">A project you started from the command line, or code you want waypoint to carry on. Adding it does not start anything.</div>
+<div class="row" style="margin-top:10px"><input type="text" id="addpath" class="grow" placeholder="~/my-game"><button id="addgo">Add</button></div>
+<div id="found" class="small" style="margin-top:8px"></div><div id="addmsg" class="msg"></div></div>
+
+<div id="newcard" class="card hidden">
+<h2>New project</h2>
+<div class="steps"><span>1. say what you want</span><span>→ 2. check the brief</span><span>→ 3. start</span></div>
+
+<label>What do you want built? <span class="dim">a few lines is enough; Claude turns it into a full brief</span></label>
+<textarea id="idea" placeholder="A cosy farming game in the browser: grow crops through four seasons, sell them in a little town, decorate your house. Hand-painted look, gentle music, saves automatically."></textarea>
+
+<label>Reference images <span class="dim">optional: art, mock-ups, screenshots of things you like (yours, or used with permission)</span></label>
+<div class="drop" id="drop">Drop images here, or click to choose<input type="file" id="file" accept="image/*" multiple class="hidden"></div>
+<div class="refs" id="refs"></div>
+
+<div class="row" style="margin-top:14px"><button class="primary" id="draft">Write the brief for me</button><span id="draftmsg" class="dim small"></span></div>
+
+<label>The brief <span class="dim">what the autopilot works from for days. Edit it freely, or write your own here</span></label>
+<textarea id="brief" placeholder="# My project&#10;&#10;What it is, who it is for, how it should look and feel…&#10;&#10;## Done means&#10;…"></textarea>
+<div class="row" style="margin-top:8px"><input type="text" id="feedback" class="grow" placeholder="Changes to the draft, e.g. “make combat faster, add a co-op mode”"><button id="revise">Revise the brief</button></div>
+
+<div class="row" style="margin-top:6px">
+ <div class="grow"><label>Name</label><input type="text" id="name" placeholder="farming-game"></div>
+ <div class="grow" style="flex:2"><label>Folder</label><input type="text" id="folder" placeholder="~/waypoint-projects/farming-game"></div>
+</div>
+<div class="dim small" style="margin-top:4px">A new folder is created for it. Pick a folder that already has code in it and waypoint reads what is there and carries on from it.</div>
+
+<details><summary>Updates and options</summary>
+<label>Discord webhook <span class="dim">optional: posts milestones and screenshots to a channel (channel settings → Integrations → Webhooks → New Webhook → Copy URL). Stays on this computer</span></label>
+<input type="password" id="discord" placeholder="https://discord.com/api/webhooks/…" autocomplete="off">
+<label><input type="checkbox" id="ghauto" checked> Make a private GitHub repository for it <span class="dim">the work is pushed there every few minutes</span></label>
+<div id="ghstate" class="dim small"></div>
+<label>Or use a repository you already have <span class="dim">optional: an empty one</span></label>
+<input type="url" id="github" placeholder="https://github.com/you/farming-game.git">
+<div class="row">
+ <div class="grow"><label>Weekly plan usage it may use <span id="wv" class="dim">85%</span></label><input type="range" id="weekly" min="30" max="100" value="85" style="width:100%"></div>
+ <div><label>Builders at once</label><input type="number" id="workers" min="1" max="6" value="1" style="width:90px"></div>
+ <div><label>Time limit, hours <span class="dim">blank: until done</span></label><input type="number" id="hours" min="1" placeholder="none" style="width:130px"></div>
+</div>
+</details>
+
+<div class="row" style="margin-top:22px"><button class="primary big" id="go">Start building</button><button id="cancel">Cancel</button></div>
+<div id="gomsg" class="msg"></div>
+</div>
+
+<div class="card" id="improvecard"><h2>Improving waypoint</h2>
+<div class="dim small">waypoint tries one change to its own instructions per round, builds a set of small test projects with and without it, and
+opens a pull request for you when it does better. The first round builds 48 small projects (it also measures the current
+version), later ones 24; each takes several hours of your plan.</div>
+<div id="improvestate" class="small" style="margin-top:10px"></div>
+<div style="overflow-x:auto"><table id="rounds" class="small" style="width:100%;border-collapse:collapse;margin-top:10px"></table></div>
+<div class="row" style="margin-top:12px"><label class="small" style="margin:0;font-weight:400">Rounds <input type="number" id="irounds" value="1" min="1" max="10" style="width:64px"></label>
+<label class="small" style="margin:0;font-weight:400">Stop at $ <input type="number" id="ibudget" placeholder="no limit" min="1" style="width:110px"></label>
+<button id="igo">Run</button></div></div>
+
+<p class="dim small">It keeps your Mac awake while it builds and pauses by itself near your plan's usage limits. Closing this page or the launcher does not stop a build. After a restart, open the launcher and press Start on the project to carry on.</p>
+</main>
+<script>
+const KEY = new URLSearchParams(location.search).get('key');
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(path, body) {
+  const r = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers: { 'x-key': KEY || '', 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: 'no answer from the launcher' }));
+  if (!r.ok || j.error) throw new Error(j.error || 'failed'); return j;
+}
+if (!KEY) $('nokey').classList.remove('hidden');
+
+const LABEL = { running: 'building', paused: 'paused for plan usage', starting: 'starting…', stopped: 'stopped', finished: 'finished', missing: 'folder missing', 'not started': 'not started' };
+let home = '~', openNote = null;
+async function refresh() {
+  if (!KEY) return;
+  let d; try { d = await api('/api/projects'); } catch (e) { $('list').innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; return; }
+  home = d.home;
+  const g = d.gh || {}; $('ghstate').innerHTML = g.loggedIn ? 'Signed in to GitHub' + (g.user ? ' as ' + esc(g.user) : '') + '.'
+    : g.installed ? '<span class="err">The GitHub CLI is not signed in: run <code>gh auth login</code> in Terminal once.</span>'
+    : '<span class="err">Needs the GitHub CLI once: in Terminal, <code>brew install gh</code> then <code>gh auth login</code>.</span>';
+  if (!g.loggedIn && !$('ghauto').dataset.touched) $('ghauto').checked = false;
+  const short = (p) => p.startsWith(home) ? '~' + p.slice(home.length) : p;
+  $('list').innerHTML = d.projects.length ? d.projects.map((p) => {
+    const cls = 's-' + (p.status === 'not started' ? 'not' : p.status);
+    const live = ['running', 'paused', 'starting'].includes(p.status);
+    const acts = ['<button data-act="dash" data-p="' + esc(p.path) + '">Dashboard</button>'];
+    if (p.managed && !live && p.status !== 'finished' && p.status !== 'missing') acts.push('<button class="primary" data-act="start" data-p="' + esc(p.path) + '">' + (p.status === 'not started' ? 'Start' : 'Carry on') + '</button>');
+    if (p.managed && live) acts.push('<button data-act="stop" data-p="' + esc(p.path) + '">Stop</button>');
+    if (live) acts.push('<button data-act="note" data-p="' + esc(p.path) + '">Send a note</button>');
+    if (p.origin) acts.unshift('<a class="btn" href="' + esc(p.origin.replace(/^git@github\.com:/, 'https://github.com/')) + '" target="_blank">GitHub</a>');
+    else if (p.managed && p.status !== 'missing') acts.push('<button data-act="github" data-p="' + esc(p.path) + '" title="Make a private GitHub repository and push to it">+ GitHub</button>');
+    acts.push('<button data-act="remove" data-p="' + esc(p.path) + '" title="Remove from this list (the folder is kept)">×</button>');
+    const showLaunch = (p.status === 'starting' || p.status === 'not started' || p.status === 'stopped') && p.launch.length;
+    return '<div class="card proj"><div><span class="name">' + esc(p.name) + '</span><span class="pill ' + cls + '">' + esc(LABEL[p.status] || p.status) + '</span>'
+      + '<div class="dim small path">' + esc(short(p.path)) + (p.managed ? '' : ' · run by its own script') + '</div>'
+      + (p.milestone ? '<div class="small" style="margin-top:4px">' + esc(p.milestone) + '</div>' : '')
+      + (p.now ? '<div class="dim small">now: ' + esc(p.now) + '</div>' : '')
+      + (p.finished ? '<div class="small">ended: ' + esc(p.finished) + '</div>' : '')
+      + (showLaunch ? '<div class="log">' + esc(p.launch.join('\n')) + '</div>' : '')
+      + (openNote === p.path ? '<div class="notebar"><input type="text" id="notetext" placeholder="btw, make the menus darker"><label class="small" style="margin:0;font-weight:400"><input type="checkbox" id="noteurgent"> now</label><button class="primary" data-act="sendnote" data-p="' + esc(p.path) + '">Send</button></div><div id="notemsg" class="msg small"></div>' : '')
+      + '</div><div class="acts">' + acts.join('') + '</div></div>';
+  }).join('') : '<div class="card dim">No projects yet. Press <b>New project</b> to start one.</div>';
+  $('found').innerHTML = d.found.length ? 'Found on this computer: ' + d.found.map((f) => '<a href="#" data-found="' + esc(f) + '">' + esc(short(f)) + '</a>').join(', ') : '';
+}
+document.addEventListener('click', async (e) => {
+  const f = e.target.closest('[data-found]'); if (f) { e.preventDefault(); $('addpath').value = f.dataset.found; return; }
+  const b = e.target.closest('[data-act]'); if (!b) return; const path = b.dataset.p;
+  try {
+    if (b.dataset.act === 'dash') { const w = window.open('about:blank'); const r = await api('/api/dashboard', { path }); w.location = r.url;
+      if (r.phone) b.title = 'On your phone (same Wi-Fi): ' + r.phone; }
+    if (b.dataset.act === 'github') { b.disabled = true; b.textContent = 'making…'; const r = await api('/api/github', { path }); alert('Made ' + r.url + ' (private). The work is pushed there every few minutes.'); }
+    if (b.dataset.act === 'start') { b.disabled = true; await api('/api/start', { path }); }
+    if (b.dataset.act === 'stop') { if (!confirm('Stop this build? Nothing is lost; Carry on picks it up again.')) return; b.disabled = true; await api('/api/stop', { path }); }
+    if (b.dataset.act === 'remove') { if (!confirm('Remove it from this list? The folder and the build are not touched.')) return; await api('/api/remove', { path }); }
+    if (b.dataset.act === 'note') { openNote = openNote === path ? null : path; }
+    if (b.dataset.act === 'sendnote') { const text = $('notetext').value.trim(); if (!text) return;
+      await api('/api/note', { path, text, urgent: $('noteurgent').checked }); openNote = null; alert('Sent. The planner reads it at its next review and replies on the dashboard.'); }
+  } catch (err) { alert(err.message); }
+  refresh();
+});
+
+// --- new project
+$('newbtn').onclick = () => { $('newcard').classList.remove('hidden'); $('addcard').classList.add('hidden'); $('idea').focus(); };
+$('cancel').onclick = () => $('newcard').classList.add('hidden');
+$('addbtn').onclick = () => { $('addcard').classList.toggle('hidden'); $('newcard').classList.add('hidden'); };
+$('addgo').onclick = async () => { try { await api('/api/add', { folder: $('addpath').value }); $('addmsg').innerHTML = '<span class="ok">added</span>'; $('addpath').value = ''; refresh(); }
+  catch (e) { $('addmsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; } };
+$('ghauto').onchange = () => { $('ghauto').dataset.touched = 1; };
+$('weekly').oninput = () => { $('wv').textContent = $('weekly').value + '%'; };
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+let folderTouched = false; $('folder').oninput = () => { folderTouched = true; };
+$('name').oninput = () => { if (!folderTouched) $('folder').value = $('name').value ? '~/waypoint-projects/' + slug($('name').value) : ''; };
+function nameFromBrief() { const m = $('brief').value.match(/^#\s*(.+)$/m); if (m && !$('name').value) { $('name').value = slug(m[1]).slice(0, 40); $('name').oninput(); } }
+
+const refs = [];
+function drawRefs() {
+  $('refs').innerHTML = refs.map((r, i) => '<div class="ref"><img src="' + r.data + '" alt=""><input type="text" data-cap="' + i + '" value="' + esc(r.caption) + '" placeholder="what it is for (the look, the HUD…)"><button class="x" data-rm="' + i + '">remove</button></div>').join('');
+}
+$('refs').addEventListener('input', (e) => { if (e.target.dataset.cap) refs[+e.target.dataset.cap].caption = e.target.value; });
+$('refs').addEventListener('click', (e) => { if (e.target.dataset.rm) { refs.splice(+e.target.dataset.rm, 1); drawRefs(); } });
+function addFiles(files) { for (const f of files) { if (!f.type.startsWith('image/')) continue; const rd = new FileReader();
+  rd.onload = () => { refs.push({ name: f.name, data: rd.result, caption: '' }); drawRefs(); }; rd.readAsDataURL(f); } }
+$('drop').onclick = () => $('file').click(); $('file').onchange = () => addFiles($('file').files);
+$('drop').ondragover = (e) => { e.preventDefault(); $('drop').classList.add('over'); }; $('drop').ondragleave = () => $('drop').classList.remove('over');
+$('drop').ondrop = (e) => { e.preventDefault(); $('drop').classList.remove('over'); addFiles(e.dataTransfer.files); };
+
+async function draft(revise) {
+  const idea = $('idea').value.trim(); if (!idea && !$('brief').value.trim()) { $('draftmsg').textContent = 'Write a few lines about what you want first.'; return; }
+  const btns = [$('draft'), $('revise')]; btns.forEach((b) => b.disabled = true);
+  const t0 = Date.now(); const timer = setInterval(() => { $('draftmsg').textContent = 'Claude is writing the brief… ' + Math.round((Date.now() - t0) / 1000) + 's (usually under two minutes)'; }, 1000);
+  try { const r = await api('/api/draft', { idea, current: revise ? $('brief').value : '', feedback: revise ? $('feedback').value : '', references: refs.map((x) => ({ name: x.name, caption: x.caption })) });
+    if (!r.ok) throw new Error(r.err); $('brief').value = r.brief; $('feedback').value = ''; $('draftmsg').textContent = 'Done. Read it through and change anything below.'; nameFromBrief(); }
+  catch (e) { $('draftmsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+  finally { clearInterval(timer); btns.forEach((b) => b.disabled = false); }
+}
+$('draft').onclick = () => draft(false); $('revise').onclick = () => draft(true);
+
+$('go').onclick = async () => {
+  let brief = $('brief').value.trim(); if (!brief && $('idea').value.trim()) brief = $('idea').value.trim();
+  if (!brief) { $('gomsg').innerHTML = '<span class="err">Say what you want built first.</span>'; return; }
+  nameFromBrief(); if (!$('name').value) { $('name').value = 'project'; $('name').oninput(); }
+  $('go').disabled = true; $('gomsg').textContent = 'Setting up…';
+  try { const made = await api('/api/create', { name: $('name').value, folder: $('folder').value, brief, references: refs.map((r) => ({ name: r.name, data: r.data, caption: r.caption })),
+      discord: $('discord').value, github: $('github').value, createGithub: $('ghauto').checked && !$('github').value.trim(), weekly: $('weekly').value / 100, workers: $('workers').value, hours: $('hours').value });
+    $('gomsg').textContent = ''; $('banner').innerHTML = '<div class="card"><span class="ok">Started.</span> The first start installs a browser for the tester, which takes a minute. Research and planning come first, so the first code appears after a while. Press Dashboard on the project to watch.'
+      + (made.project.github ? (made.project.github.url ? '<br>GitHub: <a href="' + esc(made.project.github.url) + '" target="_blank">' + esc(made.project.github.url) + '</a> (private)' : '<br><span class="err">No GitHub repository: ' + esc(made.project.github.error) + '</span>') : '') + '</div>';
+    $('newcard').classList.add('hidden'); ['idea', 'brief', 'name', 'folder', 'discord', 'github', 'feedback'].forEach((id) => $(id).value = ''); refs.length = 0; drawRefs(); folderTouched = false; refresh(); }
+  catch (e) { $('gomsg').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; }
+  finally { $('go').disabled = false; }
+};
+const P = (x) => x == null ? '-' : (x * 100).toFixed(1) + '%';
+async function benchRefresh() {
+  if (!KEY) return; let d; try { d = await api('/api/bench'); } catch { return; }
+  const b = d.baselines[0];
+  $('improvestate').innerHTML = (d.running ? '<span class="pill s-running" style="margin:0 8px 0 0">running</span>' : '')
+    + (b ? 'Current score on the test projects: <b>' + P(b.train) + '</b> (version ' + esc(b.commit) + ', ' + b.runs + ' runs).' : 'Not measured yet.')
+    + (d.log.length ? '<div class="log">' + esc(d.log.join('\n')) + '</div>' : '');
+  $('igo').disabled = d.running;
+  $('rounds').innerHTML = d.rounds.length ? '<tr class="dim"><td>When</td><td>Change tried</td><td>Before → after</td><td>Result</td></tr>' + d.rounds.map((r) =>
+    '<tr style="border-top:1px solid var(--line)"><td>' + esc((r.at || '').slice(0, 10)) + '</td><td>' + esc(r.title || '') + '</td><td>' + P(r.before) + ' → ' + P(r.after)
+    + (r.heldBefore != null ? '<div class="dim">held out ' + P(r.heldBefore) + ' → ' + P(r.heldAfter) + '</div>' : '') + '</td><td>'
+    + (r.url ? '<a href="' + esc(r.url) + '" target="_blank">kept: pull request</a>' : '<span class="' + (r.verdict === 'kept' ? 'ok' : 'dim') + '">' + esc(r.verdict || '') + '</span>')
+    + (r.reason ? '<div class="dim">' + esc(r.reason) + '</div>' : '') + '</td></tr>').join('') : '';
+}
+$('igo').onclick = async () => { if (!confirm('Run ' + $('irounds').value + ' round(s)? Each round builds 24 small projects (48 for the first, which also measures the current version) and uses your plan for several hours.')) return;
+  try { await api('/api/improve', { rounds: $('irounds').value, budget: $('ibudget').value }); } catch (e) { alert(e.message); } benchRefresh(); };
+benchRefresh(); setInterval(benchRefresh, 30000);
+refresh(); setInterval(refresh, 10000);
+</script></body></html>

@@ -11,6 +11,44 @@ notes) and **expectations** (before building anything from a description, write 
 expect, each with a check, then build to it). To share only the framework, without this repository's experiments, run
 `scripts/export/export-framework.sh <new folder>` and publish that.
 
+## The launcher
+
+Double-click `Waypoint.command` (or `node bin/app.mjs --open`): a page to write a brief (Claude can draft it from a few
+lines), add reference images, pick a folder and options, start the autopilot, and list, steer, stop and resume projects.
+Projects started from the command line show up in it too.
+
+## Improving waypoint
+
+waypoint can learn from its own runs. The model stays the same; what changes is waypoint's instructions to it: the prompts
+in `prompts/`, the routing in `config/routing.json` (which model builds what) and the skills in `skills/`.
+
+```sh
+bin/autopilot.sh improve --rounds 1 --yes          # in the background; autopilot.sh improve log | status | stop
+node bin/waypoint.mjs improve --rounds 1 --yes     # or in the foreground; without --yes either prints the plan only
+```
+
+Each round:
+
+1. **Baseline.** The benchmark in `bench/` (eight small briefs: a to-do app, a browser game, a data dashboard, a
+   command-line tool, a JSON API, a bug fix in an existing repo, and, held out, a validated form and a feature added to an
+   existing repo) is built three times with the current version using `waypoint build`, and each build is scored by its
+   hidden acceptance checks (`bench/<id>/accept.mjs`, run outside the built repo). This is measured once per commit and kept.
+2. **Proposal.** A strong model reads the training briefs' scores and failing checks, what real projects ran into (owner
+   notes, tester reports, stuck tasks from every project in `~/.waypoint/projects.json`, grouped into themes that recur
+   across projects) and earlier proposals, and makes one focused change, written as a general principle.
+3. **Gate.** The round is thrown away if the change touches anything but `prompts/`, `config/routing.json` and `skills/`,
+   if a prompt no longer loads, or if waypoint's own tests fail. Otherwise the suite is built three times with it. It is
+   kept only if the training score rises by more than the noise (twice the spread between runs, at least 3 points) or holds
+   while costing at least 15% less, the held-out briefs get no worse, and no single brief falls sharply.
+4. **Your approval.** A kept change is pushed on its own branch and opened as a draft pull request with the before and
+   after table and the reasoning. Nothing is merged automatically.
+
+The first round makes 48 builds (24 for the baseline), later rounds 24; each build is capped at $5 and 25 minutes (see
+`bench/suite.json`), and the whole thing pauses for your plan's limits like the autopilot. `--budget-usd N` stops it at a
+total, `--only todo,cli` and `--reps 1` make a quick, rough round, and `node bin/waypoint.mjs bench --yes` just measures.
+Results are in `bench/results/` and in the launcher's "Improving waypoint" card. `test/fixtures/bench-solutions/` holds a
+reference solution for each brief, which the tests use to prove every acceptance check can be passed.
+
 ## Start here: `waypoint build`
 
 To build something from a brief, run this in a git repo that holds the brief:

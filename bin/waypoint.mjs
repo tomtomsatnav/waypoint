@@ -60,6 +60,13 @@ const USAGE = `waypoint <command>
                           the planner folds it into the spec and plan at the next review (with --urgent, after the task in
                           progress). With no text, lists the notes and what became of them.
   autopilot status        Milestones, tasks, models, spend and usage.
+  improve [--rounds 1] [--budget-usd N] [--reps 3] [--only id,id] [--engine build] [--model m] [--weekly-ceiling 0.85]
+          [--no-pr] [--yes]
+                          waypoint learns from its own runs: a strong model proposes one change to prompts/, config/routing.json
+                          or skills/, the benchmark in bench/ runs with and without it, and a change that is better beyond the
+                          noise (held-out briefs no worse) is opened as a draft pull request. Without --yes it prints the plan.
+  bench [--reps 1] [--only id,id] [--engine build] [--yes]
+                          Run the benchmark with this waypoint and print the scores (spends usage).
   doctor                  Check the tools waypoint needs (node, git, claude, aos-orch, bwrap). Starts nothing, spends nothing.
                           Exit 0 if all are present, 1 otherwise.
   drift <transcript>      Re-reads and re-edits after each compaction in a session transcript (JSON).
@@ -72,7 +79,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json', 'no-research', 'urgent'].includes(k)) { o[k] = true; continue; }
+    if (['yes', 'fresh', 'no-handoff', 'no-anchor', 'precompact-notes', 'help', 'json', 'no-research', 'urgent', 'no-pr'].includes(k)) { o[k] = true; continue; }
     const v = argv[++i];
     if (v === undefined) throw new Error(`--${k} needs a value`);
     o[k] = v;
@@ -224,6 +231,34 @@ async function main() {
     const st = await autopilot(opts);
     process.stdout.write(statusText(st));
     return st.shipped ? 0 : 1;
+  }
+
+  if (cmd === 'improve' || cmd === 'bench') {
+    const { loadSuite, runSuite, summarise, table, RESULTS, WP_ROOT } = await import('../lib/bench.mjs');
+    const suite = loadSuite();
+    const only = o.only ? String(o.only).split(',').map((x) => x.trim()).filter(Boolean) : null;
+    const unknown = (only || []).filter((id) => !suite.briefs.some((b) => b.id === id));
+    if (unknown.length) throw new Error(`no such brief: ${unknown.join(', ')} (there are ${suite.briefs.map((b) => b.id).join(', ')})`);
+    const reps = num(o.reps, 'reps') ?? (cmd === 'bench' ? 1 : 3);
+    const n = only ? only.length : suite.briefs.length;
+    const per = suite.perBriefBudgetUsd ?? 5, mins = suite.perBriefMinutes ?? 25;
+    const plan = cmd === 'bench'
+      ? `bench: ${n} briefs x ${reps} runs = ${n * reps} builds, each capped at $${per} and ${mins} min (worst case $${n * reps * per}, ${Math.round(n * reps * mins / 60)} h).`
+      : `improve: ${num(o.rounds, 'rounds') ?? 1} round(s). The baseline (once per commit) and each proposal run ${n} briefs x ${reps} runs = ${n * reps} builds each, `
+        + `capped at $${per} and ${mins} min apiece (worst case per suite $${n * reps * per}, ${Math.round(n * reps * mins / 60)} h)${o['budget-usd'] ? `; stops at $${o['budget-usd']} in all` : ''}.`;
+    if (!o.yes) { process.stdout.write(`${plan}\nNot started: pass --yes to run (spends usage).\n`); return 0; }
+    process.stderr.write(plan + '\n');
+    if (cmd === 'bench') {
+      const outDir = resolve(RESULTS, `bench-${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}`);
+      const out = await runSuite({ waypointDir: WP_ROOT, outDir, reps, only, engine: o.engine || 'build', log: (m) => process.stderr.write(`[bench] ${m}\n`) });
+      process.stdout.write(`${table(summarise(out.runs))}\n\nresults: ${outDir}\n`); return 0;
+    }
+    const { improve } = await import('../lib/improve.mjs');
+    const r = await improve({ rounds: num(o.rounds, 'rounds') ?? 1, budgetUsd: num(o['budget-usd'], 'budget-usd'), reps, only, engine: o.engine || 'build',
+      model: o.model, weeklyCeiling: num(o['weekly-ceiling'], 'weekly-ceiling'), pr: !o['no-pr'] });
+    for (const x of r.rounds || []) process.stdout.write(`${x.verdict}: ${x.title}${x.reason ? ` (${x.reason})` : ''}${x.published?.url ? ` ${x.published.url}` : x.published?.note ? ` (${x.published.note})` : ''}\n`);
+    process.stdout.write(`spent about $${(r.spent || 0).toFixed(2)}\n`);
+    return 0;
   }
 
   if (cmd === 'doctor') {

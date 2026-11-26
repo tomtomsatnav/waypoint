@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tally</title>
+  <style>
+    :root { --bg: #f6f5f1; --card: #fff; --ink: #222; --muted: #777; --line: #e4e2dc; --accent: #2f6fdf; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, sans-serif; }
+    main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+    h1 { margin: 0 0 16px; font-weight: 600; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    #new { width: 100%; border: 0; border-bottom: 1px solid var(--line); padding: 14px 16px; font: inherit; }
+    #new:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+    li label { flex: 1; display: flex; gap: 12px; align-items: center; cursor: pointer; word-break: break-word; }
+    li.done span { color: var(--muted); text-decoration: line-through; }
+    input[type=checkbox] { width: 20px; height: 20px; }
+    .del { border: 0; background: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 0 6px; }
+    .del:hover, .del:focus { color: #c33; }
+    footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 16px; color: var(--muted); font-size: 14px; }
+    footer button { font: inherit; border: 1px solid transparent; background: none; color: inherit; padding: 2px 8px; border-radius: 6px; cursor: pointer; }
+    footer button[aria-pressed=true] { border-color: var(--line); color: var(--ink); }
+    footer button:hover { color: var(--ink); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Tally</h1>
+  <div class="card">
+    <input id="new" data-testid="new-todo" placeholder="What needs doing?" aria-label="New to-do" autocomplete="off" autofocus>
+    <ul id="list"></ul>
+    <footer>
+      <span data-testid="todo-count" id="count" aria-live="polite"></span>
+      <span role="group" aria-label="Filter">
+        <button data-testid="filter-all" data-filter="all">All</button>
+        <button data-testid="filter-active" data-filter="active">Active</button>
+        <button data-testid="filter-completed" data-filter="completed">Completed</button>
+      </span>
+      <button data-testid="clear-completed" id="clear">Clear completed</button>
+    </footer>
+  </div>
+</main>
+<script>
+  const KEY = 'tally.todos';
+  let todos = [];
+  let filter = 'all';
+  try { todos = JSON.parse(localStorage.getItem(KEY)) || []; } catch { todos = []; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch {} };
+  const $ = (s) => document.querySelector(s);
+
+  function render() {
+    const list = $('#list');
+    list.textContent = '';
+    const shown = todos.filter((t) => filter === 'all' || (filter === 'active' ? !t.done : t.done));
+    for (const t of shown) {
+      const li = document.createElement('li');
+      li.dataset.testid = 'todo-item';
+      li.className = t.done ? 'done' : '';
+      const label = document.createElement('label');
+      const box = document.createElement('input');
+      box.type = 'checkbox'; box.checked = t.done; box.dataset.testid = 'todo-toggle';
+      box.addEventListener('change', () => { t.done = box.checked; save(); render(); });
+      const span = document.createElement('span'); span.textContent = t.text;
+      label.append(box, span);
+      const del = document.createElement('button');
+      del.className = 'del'; del.dataset.testid = 'todo-delete'; del.textContent = '×';
+      del.setAttribute('aria-label', `Delete "${t.text}"`);
+      del.addEventListener('click', () => { todos = todos.filter((x) => x !== t); save(); render(); });
+      li.append(label, del);
+      list.append(li);
+    }
+    const left = todos.filter((t) => !t.done).length;
+    $('#count').textContent = `${left} ${left === 1 ? 'item' : 'items'} left`;
+    for (const b of document.querySelectorAll('[data-filter]')) b.setAttribute('aria-pressed', String(b.dataset.filter === filter));
+  }
+
+  $('#new').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const text = e.target.value.trim();
+    if (text) { todos.push({ id: Date.now() + Math.random(), text, done: false }); save(); render(); }
+    e.target.value = '';
+  });
+  for (const b of document.querySelectorAll('[data-filter]')) b.addEventListener('click', () => { filter = b.dataset.filter; render(); });
+  $('#clear').addEventListener('click', () => { todos = todos.filter((t) => !t.done); save(); render(); });
+  render();
+</script>
+</body>
+</html>
